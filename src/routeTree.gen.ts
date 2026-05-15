@@ -9,14 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PagamentosRouteImport } from './routes/pagamentos'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as AlfandegaRouteImport } from './routes/alfandega'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperacoesIndexRouteImport } from './routes/operacoes.index'
 import { Route as OperacoesConectarRouteImport } from './routes/operacoes.conectar'
 import { Route as OperacoesIdRouteImport } from './routes/operacoes.$id'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PagamentosRoute = PagamentosRouteImport.update({
   id: '/pagamentos',
   path: '/pagamentos',
@@ -30,6 +38,16 @@ const LoginRoute = LoginRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlfandegaRoute = AlfandegaRouteImport.update({
+  id: '/alfandega',
+  path: '/alfandega',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -55,18 +73,24 @@ const OperacoesIdRoute = OperacoesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/alfandega': typeof AlfandegaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pagamentos': typeof PagamentosRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/operacoes/$id': typeof OperacoesIdRoute
   '/operacoes/conectar': typeof OperacoesConectarRoute
   '/operacoes/': typeof OperacoesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/alfandega': typeof AlfandegaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pagamentos': typeof PagamentosRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/operacoes/$id': typeof OperacoesIdRoute
   '/operacoes/conectar': typeof OperacoesConectarRoute
   '/operacoes': typeof OperacoesIndexRoute
@@ -74,9 +98,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/alfandega': typeof AlfandegaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/pagamentos': typeof PagamentosRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/operacoes/$id': typeof OperacoesIdRoute
   '/operacoes/conectar': typeof OperacoesConectarRoute
   '/operacoes/': typeof OperacoesIndexRoute
@@ -85,27 +112,36 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/alfandega'
+    | '/configuracoes'
     | '/dashboard'
     | '/login'
     | '/pagamentos'
+    | '/sitemap.xml'
     | '/operacoes/$id'
     | '/operacoes/conectar'
     | '/operacoes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/alfandega'
+    | '/configuracoes'
     | '/dashboard'
     | '/login'
     | '/pagamentos'
+    | '/sitemap.xml'
     | '/operacoes/$id'
     | '/operacoes/conectar'
     | '/operacoes'
   id:
     | '__root__'
     | '/'
+    | '/alfandega'
+    | '/configuracoes'
     | '/dashboard'
     | '/login'
     | '/pagamentos'
+    | '/sitemap.xml'
     | '/operacoes/$id'
     | '/operacoes/conectar'
     | '/operacoes/'
@@ -113,9 +149,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AlfandegaRoute: typeof AlfandegaRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   PagamentosRoute: typeof PagamentosRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   OperacoesIdRoute: typeof OperacoesIdRoute
   OperacoesConectarRoute: typeof OperacoesConectarRoute
   OperacoesIndexRoute: typeof OperacoesIndexRoute
@@ -123,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pagamentos': {
       id: '/pagamentos'
       path: '/pagamentos'
@@ -142,6 +188,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alfandega': {
+      id: '/alfandega'
+      path: '/alfandega'
+      fullPath: '/alfandega'
+      preLoaderRoute: typeof AlfandegaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -177,9 +237,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AlfandegaRoute: AlfandegaRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   PagamentosRoute: PagamentosRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   OperacoesIdRoute: OperacoesIdRoute,
   OperacoesConectarRoute: OperacoesConectarRoute,
   OperacoesIndexRoute: OperacoesIndexRoute,
