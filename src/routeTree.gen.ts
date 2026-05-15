@@ -9,38 +9,201 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PagamentosRouteImport } from './routes/pagamentos'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as AlfandegaRouteImport } from './routes/alfandega'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OperacoesIndexRouteImport } from './routes/operacoes.index'
+import { Route as OperacoesConectarRouteImport } from './routes/operacoes.conectar'
+import { Route as OperacoesIdRouteImport } from './routes/operacoes.$id'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PagamentosRoute = PagamentosRouteImport.update({
+  id: '/pagamentos',
+  path: '/pagamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlfandegaRoute = AlfandegaRouteImport.update({
+  id: '/alfandega',
+  path: '/alfandega',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacoesIndexRoute = OperacoesIndexRouteImport.update({
+  id: '/operacoes/',
+  path: '/operacoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacoesConectarRoute = OperacoesConectarRouteImport.update({
+  id: '/operacoes/conectar',
+  path: '/operacoes/conectar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacoesIdRoute = OperacoesIdRouteImport.update({
+  id: '/operacoes/$id',
+  path: '/operacoes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/alfandega': typeof AlfandegaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/operacoes/$id': typeof OperacoesIdRoute
+  '/operacoes/conectar': typeof OperacoesConectarRoute
+  '/operacoes/': typeof OperacoesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/alfandega': typeof AlfandegaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/operacoes/$id': typeof OperacoesIdRoute
+  '/operacoes/conectar': typeof OperacoesConectarRoute
+  '/operacoes': typeof OperacoesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/alfandega': typeof AlfandegaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/operacoes/$id': typeof OperacoesIdRoute
+  '/operacoes/conectar': typeof OperacoesConectarRoute
+  '/operacoes/': typeof OperacoesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/alfandega'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/login'
+    | '/pagamentos'
+    | '/sitemap.xml'
+    | '/operacoes/$id'
+    | '/operacoes/conectar'
+    | '/operacoes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/alfandega'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/login'
+    | '/pagamentos'
+    | '/sitemap.xml'
+    | '/operacoes/$id'
+    | '/operacoes/conectar'
+    | '/operacoes'
+  id:
+    | '__root__'
+    | '/'
+    | '/alfandega'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/login'
+    | '/pagamentos'
+    | '/sitemap.xml'
+    | '/operacoes/$id'
+    | '/operacoes/conectar'
+    | '/operacoes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AlfandegaRoute: typeof AlfandegaRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
+  DashboardRoute: typeof DashboardRoute
+  LoginRoute: typeof LoginRoute
+  PagamentosRoute: typeof PagamentosRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  OperacoesIdRoute: typeof OperacoesIdRoute
+  OperacoesConectarRoute: typeof OperacoesConectarRoute
+  OperacoesIndexRoute: typeof OperacoesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pagamentos': {
+      id: '/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/pagamentos'
+      preLoaderRoute: typeof PagamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alfandega': {
+      id: '/alfandega'
+      path: '/alfandega'
+      fullPath: '/alfandega'
+      preLoaderRoute: typeof AlfandegaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +211,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacoes/': {
+      id: '/operacoes/'
+      path: '/operacoes'
+      fullPath: '/operacoes/'
+      preLoaderRoute: typeof OperacoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacoes/conectar': {
+      id: '/operacoes/conectar'
+      path: '/operacoes/conectar'
+      fullPath: '/operacoes/conectar'
+      preLoaderRoute: typeof OperacoesConectarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacoes/$id': {
+      id: '/operacoes/$id'
+      path: '/operacoes/$id'
+      fullPath: '/operacoes/$id'
+      preLoaderRoute: typeof OperacoesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AlfandegaRoute: AlfandegaRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
+  DashboardRoute: DashboardRoute,
+  LoginRoute: LoginRoute,
+  PagamentosRoute: PagamentosRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  OperacoesIdRoute: OperacoesIdRoute,
+  OperacoesConectarRoute: OperacoesConectarRoute,
+  OperacoesIndexRoute: OperacoesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
