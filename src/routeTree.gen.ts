@@ -9,11 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PagamentosRouteImport } from './routes/pagamentos'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperacoesIndexRouteImport } from './routes/operacoes.index'
+import { Route as OperacoesConectarRouteImport } from './routes/operacoes.conectar'
+import { Route as OperacoesIdRouteImport } from './routes/operacoes.$id'
 
+const PagamentosRoute = PagamentosRouteImport.update({
+  id: '/pagamentos',
+  path: '/pagamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -34,17 +42,33 @@ const OperacoesIndexRoute = OperacoesIndexRouteImport.update({
   path: '/operacoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacoesConectarRoute = OperacoesConectarRouteImport.update({
+  id: '/operacoes/conectar',
+  path: '/operacoes/conectar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacoesIdRoute = OperacoesIdRouteImport.update({
+  id: '/operacoes/$id',
+  path: '/operacoes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
+  '/operacoes/$id': typeof OperacoesIdRoute
+  '/operacoes/conectar': typeof OperacoesConectarRoute
   '/operacoes/': typeof OperacoesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
+  '/operacoes/$id': typeof OperacoesIdRoute
+  '/operacoes/conectar': typeof OperacoesConectarRoute
   '/operacoes': typeof OperacoesIndexRoute
 }
 export interface FileRoutesById {
@@ -52,25 +76,60 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
+  '/operacoes/$id': typeof OperacoesIdRoute
+  '/operacoes/conectar': typeof OperacoesConectarRoute
   '/operacoes/': typeof OperacoesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/operacoes/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/pagamentos'
+    | '/operacoes/$id'
+    | '/operacoes/conectar'
+    | '/operacoes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/operacoes'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/operacoes/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/pagamentos'
+    | '/operacoes/$id'
+    | '/operacoes/conectar'
+    | '/operacoes'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/pagamentos'
+    | '/operacoes/$id'
+    | '/operacoes/conectar'
+    | '/operacoes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  PagamentosRoute: typeof PagamentosRoute
+  OperacoesIdRoute: typeof OperacoesIdRoute
+  OperacoesConectarRoute: typeof OperacoesConectarRoute
   OperacoesIndexRoute: typeof OperacoesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pagamentos': {
+      id: '/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/pagamentos'
+      preLoaderRoute: typeof PagamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -99,6 +158,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperacoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacoes/conectar': {
+      id: '/operacoes/conectar'
+      path: '/operacoes/conectar'
+      fullPath: '/operacoes/conectar'
+      preLoaderRoute: typeof OperacoesConectarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacoes/$id': {
+      id: '/operacoes/$id'
+      path: '/operacoes/$id'
+      fullPath: '/operacoes/$id'
+      preLoaderRoute: typeof OperacoesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -106,6 +179,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  PagamentosRoute: PagamentosRoute,
+  OperacoesIdRoute: OperacoesIdRoute,
+  OperacoesConectarRoute: OperacoesConectarRoute,
   OperacoesIndexRoute: OperacoesIndexRoute,
 }
 export const routeTree = rootRouteImport
