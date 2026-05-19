@@ -189,13 +189,7 @@ function Login() {
               </p>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                navigate({ to: "/dashboard" });
-              }}
-              className="mt-8 space-y-6"
-            >
+            <form onSubmit={handleLogin} className="mt-8 space-y-6">
               <div>
                 <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
                   E-mail Corporativo
@@ -228,26 +222,35 @@ function Login() {
                 />
               </div>
 
+              {error && (
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/40 bg-destructive/10 text-sm">
+                  <AlertCircle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="btn-primary w-full rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2"
+                disabled={submitting}
+                className="btn-primary w-full rounded-xl py-3.5 font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                Entrar <ArrowRight className="h-4 w-4" />
+                {submitting ? "Entrando..." : (<>Entrar <ArrowRight className="h-4 w-4" /></>)}
               </button>
 
-              <Link
-                to="/dashboard"
-                className="w-full rounded-xl py-3.5 font-medium flex items-center justify-center gap-2 border border-border hover:bg-surface-container hover:border-secondary/40 transition"
+              <button
+                type="button"
+                onClick={handleGoogle}
+                className="w-full rounded-xl py-3 font-medium flex items-center justify-center gap-3 border border-border hover:bg-surface-container hover:border-secondary/40 transition"
               >
-                <Box className="h-4 w-4" /> Acessar ambiente demo
-              </Link>
+                <GoogleIcon /> Continuar com Google
+              </button>
             </form>
 
             <div className="text-center mt-8 text-sm text-muted-foreground">
               Novo na TXLOGPAY?{" "}
-              <a className="text-secondary font-semibold hover:underline" href="#">
+              <Link to="/signup" className="text-secondary font-semibold hover:underline">
                 Solicite acesso
-              </a>
+              </Link>
             </div>
             <div className="text-center mt-5 text-[10px] font-mono text-muted-foreground/70 tracking-[0.18em] flex items-center justify-center gap-1.5">
               <Lock className="h-3 w-3" /> SECURE 256-BIT AES ENCRYPTION
@@ -256,5 +259,13 @@ function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#EA4335" d="M12 10.2v3.96h5.52c-.24 1.5-1.74 4.38-5.52 4.38-3.3 0-6-2.76-6-6.18s2.7-6.18 6-6.18c1.92 0 3.18.78 3.9 1.5l2.64-2.58C16.92 3.36 14.7 2.4 12 2.4 6.78 2.4 2.4 6.78 2.4 12s4.38 9.6 9.6 9.6c5.52 0 9.18-3.9 9.18-9.36 0-.66-.06-1.14-.18-1.62H12z" />
+    </svg>
   );
 }
