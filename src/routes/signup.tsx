@@ -5,8 +5,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
-import heroImage from "@/assets/login-hero.jpg";
+import heroImage from "@/assets/login-hero.jpg"
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -63,16 +62,19 @@ function Signup() {
   }
 
   async function handleGoogle() {
-    setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: "https://beta.txlogpay.com/dashboard",
-    });
-    if (result.error) {
-      setError("Falha ao conectar com Google. Tente novamente.");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+  setError(null);
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: "https://beta.txlogpay.com/dashboard",
+    },
+  });
+
+  if (error) {
+    setError("Falha ao conectar com Google. Tente novamente.");
+    console.error(error);
+  }
   }
 
   return (
