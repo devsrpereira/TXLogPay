@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { motion } from "motion/react";
 import {
@@ -7,7 +8,11 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useAllOperations } from "@/hooks/use-operations";
 import { useAuth } from "@/hooks/use-auth";
-import { formatCurrency, toUSD } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
+import {
+  calculateFinancialTotal, calculateProtectedTotal, fetchUsdBaseRates,
+  getProtectedAmount, getTotalFees, toUsdAmount, type FxRates,
+} from "@/lib/financial-calculations";
 import { USER_TIER_BADGE } from "@/types/profile.types";
 import type { DBOperation } from "@/services/operations.db";
 import type { UserTier } from "@/domain/user";
@@ -19,35 +24,23 @@ export const Route = createFileRoute("/dashboard")({
 
 const TRADITIONAL_LC_RATE = 0.025;
 
-function computeKpis(all: DBOperation[]) {
+function computeKpis(all: DBOperation[], rates: FxRates, fxTimestamp: string | null) {
   const active = all.filter((o) => o.status === "ACTIVE" || o.status === "OPERATION_MONITORING");
   const completed = all.filter((o) => o.status === "COMPLETED" || o.status === "PAYMENT_RELEASED");
   const counted = [...active, ...completed];
-  // Prefer the persisted USD-normalised value; fall back to live FX conversion
-  // for legacy rows that pre-date the normalisation column.
-  const usdProtected = (o: DBOperation) =>
-    o.usd_normalized_value != null
-      ? Number(o.usd_normalized_value)
-      : toUSD(Number(o.protected_amount || 0), o.currency);
-  const usdFee = (o: DBOperation) => {
-    const rate = o.usd_conversion_rate != null ? Number(o.usd_conversion_rate) : null;
-    return rate != null
-      ? Number(o.fee_amount || 0) * rate
-      : toUSD(Number(o.fee_amount || 0), o.currency);
-  };
-  const protectedAmount = active.reduce((s, o) => s + usdProtected(o), 0);
-  const volume = counted.reduce((s, o) => s + usdProtected(o), 0);
-  const fees = counted.reduce((s, o) => s + usdFee(o), 0);
-  const traditional = counted.reduce((s, o) => s + usdProtected(o) * TRADITIONAL_LC_RATE, 0);
-  const savings = Math.max(0, traditional - fees);
+  const protectedTotal = calculateProtectedTotal(active, rates, fxTimestamp);
+  const volumeTotal = calculateProtectedTotal(counted, rates, fxTimestamp);
+  const feesTotal = calculateFinancialTotal(counted, getTotalFees, rates, fxTimestamp);
+  const traditional = volumeTotal.amount * TRADITIONAL_LC_RATE;
+  const savingsTotal = { ...volumeTotal, amount: Math.max(0, traditional - feesTotal.amount) };
   return {
-    protectedAmount, volume, savings, fees,
+    protectedTotal, volumeTotal, savingsTotal, feesTotal,
     activeCount: active.length, completedCount: completed.length,
     counted,
   };
 }
 
-function monthlySeries(ops: DBOperation[]) {
+function monthlySeries(ops: DBOperation[], rates: FxRates, forceUsd: boolean) {
   const buckets = new Map<string, { label: string; volume: number; count: number }>();
   const now = new Date();
   for (let i = 5; i >= 0; i--) {
@@ -61,10 +54,9 @@ function monthlySeries(ops: DBOperation[]) {
     const key = `${d.getFullYear()}-${d.getMonth()}`;
     const b = buckets.get(key);
     if (b) {
-      const usd = o.usd_normalized_value != null
-        ? Number(o.usd_normalized_value)
-        : toUSD(Number(o.protected_amount || 0), o.currency);
-      b.volume += usd; b.count++;
+      const amount = getProtectedAmount(o);
+      b.volume += forceUsd ? toUsdAmount(amount, o.currency, rates) : amount;
+      b.count++;
     }
   }
   return Array.from(buckets.values());
