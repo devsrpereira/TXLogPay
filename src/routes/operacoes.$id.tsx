@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import {
   CheckCircle2, Shield, Zap, FileText, Clock, Loader2,
   Upload, FileCheck2, X, ExternalLink, Sparkles, AlertTriangle,
-  PackageCheck, Banknote, Activity, Truck, Landmark,
+  PackageCheck, Banknote, Activity, Truck, Landmark, Globe, ArrowRight,
 } from "lucide-react";
 import {
   useOperation, useSubmitReceipt, useValidatePayment,
