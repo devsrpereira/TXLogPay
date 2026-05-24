@@ -180,40 +180,37 @@ function NovaOperacao() {
               {step === 1 && <Step2Documents errors={errors} />}
               {step === 2 && <Step3Bank errors={errors} />}
               {step === 3 && <Step4Guarantee />}
-              {step === 4 && current && (
-                <Step5Activated op={current} onGo={() => navigate({ to: "/operacoes/$id", params: { id: current.id } })} />
-              )}
             </motion.div>
           </AnimatePresence>
 
-          {step < 4 && (
-            <div className="mt-6 flex items-center justify-between">
-              <button
-                onClick={prev}
-                disabled={step === 0}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ArrowLeft className="h-4 w-4" /> Voltar
-              </button>
+          {errors._ && <div className="mt-3 text-xs text-destructive">{errors._}</div>}
 
-              {step < 3 ? (
-                <button
-                  onClick={next}
-                  className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold"
-                >
-                  Continuar <ArrowRight className="h-4 w-4" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleActivate}
-                  disabled={submitting}
-                  className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
-                >
-                  {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Ativando...</> : <><ShieldCheck className="h-4 w-4" /> Ativar Operação</>}
-                </button>
-              )}
-            </div>
-          )}
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              onClick={prev}
+              disabled={step === 0}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar
+            </button>
+
+            {step < 3 ? (
+              <button
+                onClick={next}
+                className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold"
+              >
+                Continuar <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleActivate}
+                disabled={submitting}
+                className="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
+              >
+                {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Registrando...</> : <><ShieldCheck className="h-4 w-4" /> Confirmar e Pagar</>}
+              </button>
+            )}
+          </div>
         </div>
 
         <SidePanel
