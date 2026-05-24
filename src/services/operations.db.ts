@@ -141,7 +141,7 @@ export const operationsDb = {
 
   async getReceiptUrl(path: string): Promise<string | null> {
     const { data, error } = await supabase.storage
-      .from("payment-proofs")
+      .from("payment-receipts")
       .createSignedUrl(path, 60 * 60);
     if (error) return null;
     return data?.signedUrl ?? null;
