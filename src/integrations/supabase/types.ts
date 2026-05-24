@@ -26,6 +26,8 @@ export type Database = {
           duimp: string | null
           exporter_name: string | null
           fee_amount: number
+          fx_currency_used: string | null
+          fx_rate_to_usd: number | null
           fx_reference_date: string | null
           iban: string | null
           id: string
@@ -62,6 +64,8 @@ export type Database = {
           duimp?: string | null
           exporter_name?: string | null
           fee_amount?: number
+          fx_currency_used?: string | null
+          fx_rate_to_usd?: number | null
           fx_reference_date?: string | null
           iban?: string | null
           id?: string
@@ -98,6 +102,8 @@ export type Database = {
           duimp?: string | null
           exporter_name?: string | null
           fee_amount?: number
+          fx_currency_used?: string | null
+          fx_rate_to_usd?: number | null
           fx_reference_date?: string | null
           iban?: string | null
           id?: string
