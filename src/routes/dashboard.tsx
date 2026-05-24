@@ -15,9 +15,9 @@ export const Route = createFileRoute("/dashboard")({
 
 function computeKpis(ops: DBOperation[]) {
   const active = ops.filter((o) => o.status === "ACTIVE");
-  const settled = ops.filter((o) => o.status === "SETTLED");
+  const settled = ops.filter((o) => o.status === "COMPLETED");
   const totalTransacionado = ops.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  const saldoProtegido = active.reduce((s, o) => s + Number(o.amount || 0), 0);
+  const saldoProtegido = active.reduce((s, o) => s + Number(o.protected_amount || 0), 0);
   return {
     totalTransacionado,
     saldoProtegido,
@@ -111,7 +111,7 @@ function Dashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">{formatCurrency(Number(o.amount), o.currency)}</div>
+                        <div className="font-semibold">{formatCurrency(Number(o.protected_amount), o.currency)}</div>
                         <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">
                           {o.status}
                         </div>
