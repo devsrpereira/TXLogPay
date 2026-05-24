@@ -34,6 +34,7 @@ export type Database = {
           invoice_number: string | null
           operation_code: string
           operation_currency: string | null
+          operation_value: number
           payment_proof_url: string | null
           payment_receipt_name: string | null
           payment_receipt_url: string | null
@@ -44,6 +45,7 @@ export type Database = {
           status: Database["public"]["Enums"]["operation_status"]
           swift: string | null
           total_amount: number
+          total_fees: number
           updated_at: string
           usd_conversion_rate: number | null
           usd_normalized_value: number | null
@@ -68,6 +70,7 @@ export type Database = {
           invoice_number?: string | null
           operation_code: string
           operation_currency?: string | null
+          operation_value?: number
           payment_proof_url?: string | null
           payment_receipt_name?: string | null
           payment_receipt_url?: string | null
@@ -78,6 +81,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["operation_status"]
           swift?: string | null
           total_amount?: number
+          total_fees?: number
           updated_at?: string
           usd_conversion_rate?: number | null
           usd_normalized_value?: number | null
@@ -102,6 +106,7 @@ export type Database = {
           invoice_number?: string | null
           operation_code?: string
           operation_currency?: string | null
+          operation_value?: number
           payment_proof_url?: string | null
           payment_receipt_name?: string | null
           payment_receipt_url?: string | null
@@ -112,6 +117,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["operation_status"]
           swift?: string | null
           total_amount?: number
+          total_fees?: number
           updated_at?: string
           usd_conversion_rate?: number | null
           usd_normalized_value?: number | null
