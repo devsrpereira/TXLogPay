@@ -121,7 +121,9 @@ function NovaOperacao() {
     try {
       const op = await operationsDb.createPending({
         user_id: user.id,
-        protected_amount: breakdown.gross_amount,
+        operation_value: commercial.operation_value,
+        total_fees: breakdown.fee_amount + breakdown.custody_fee + breakdown.settlement_fee,
+        protected_amount: breakdown.net_exporter_amount,
         fee_amount: breakdown.fee_amount + breakdown.custody_fee + breakdown.settlement_fee,
         total_amount: breakdown.total_funding,
         currency: commercial.currency,
@@ -708,8 +710,9 @@ function SidePanel({
         </p>
 
         <div className="mt-4 space-y-2 text-sm p-3 rounded-xl glass">
-          <BreakdownRow label="Valor protegido" value={formatCurrency(breakdown.gross_amount, currency)} />
+          <BreakdownRow label="Valor da operação" value={formatCurrency(breakdown.gross_amount, currency)} />
           <BreakdownRow label="Taxa operacional TXLOGPAY" value={formatCurrency(breakdown.fee_amount, currency)} />
+          <BreakdownRow label="Valor protegido líquido" value={formatCurrency(breakdown.net_exporter_amount, currency)} />
           <div className="h-px bg-border my-1" />
           <BreakdownRow
             label="Total da garantia"

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { motion } from "motion/react";
 import {
@@ -7,7 +8,11 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useAllOperations } from "@/hooks/use-operations";
 import { useAuth } from "@/hooks/use-auth";
-import { formatCurrency, toUSD } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
+import {
+  calculateFinancialTotal, calculateProtectedTotal, fetchUsdBaseRates,
+  getProtectedAmount, getTotalFees, toUsdAmount, type FxRates,
+} from "@/lib/financial-calculations";
 import { USER_TIER_BADGE } from "@/types/profile.types";
 import type { DBOperation } from "@/services/operations.db";
 import type { UserTier } from "@/domain/user";
@@ -19,35 +24,23 @@ export const Route = createFileRoute("/dashboard")({
 
 const TRADITIONAL_LC_RATE = 0.025;
 
-function computeKpis(all: DBOperation[]) {
+function computeKpis(all: DBOperation[], rates: FxRates, fxTimestamp: string | null) {
   const active = all.filter((o) => o.status === "ACTIVE" || o.status === "OPERATION_MONITORING");
   const completed = all.filter((o) => o.status === "COMPLETED" || o.status === "PAYMENT_RELEASED");
   const counted = [...active, ...completed];
-  // Prefer the persisted USD-normalised value; fall back to live FX conversion
-  // for legacy rows that pre-date the normalisation column.
-  const usdProtected = (o: DBOperation) =>
-    o.usd_normalized_value != null
-      ? Number(o.usd_normalized_value)
-      : toUSD(Number(o.protected_amount || 0), o.currency);
-  const usdFee = (o: DBOperation) => {
-    const rate = o.usd_conversion_rate != null ? Number(o.usd_conversion_rate) : null;
-    return rate != null
-      ? Number(o.fee_amount || 0) * rate
-      : toUSD(Number(o.fee_amount || 0), o.currency);
-  };
-  const protectedAmount = active.reduce((s, o) => s + usdProtected(o), 0);
-  const volume = counted.reduce((s, o) => s + usdProtected(o), 0);
-  const fees = counted.reduce((s, o) => s + usdFee(o), 0);
-  const traditional = counted.reduce((s, o) => s + usdProtected(o) * TRADITIONAL_LC_RATE, 0);
-  const savings = Math.max(0, traditional - fees);
+  const protectedTotal = calculateProtectedTotal(active, rates, fxTimestamp);
+  const volumeTotal = calculateProtectedTotal(counted, rates, fxTimestamp);
+  const feesTotal = calculateFinancialTotal(counted, getTotalFees, rates, fxTimestamp);
+  const traditional = volumeTotal.amount * TRADITIONAL_LC_RATE;
+  const savingsTotal = { ...volumeTotal, amount: Math.max(0, traditional - feesTotal.amount) };
   return {
-    protectedAmount, volume, savings, fees,
+    protectedTotal, volumeTotal, savingsTotal, feesTotal,
     activeCount: active.length, completedCount: completed.length,
     counted,
   };
 }
 
-function monthlySeries(ops: DBOperation[]) {
+function monthlySeries(ops: DBOperation[], rates: FxRates, forceUsd: boolean) {
   const buckets = new Map<string, { label: string; volume: number; count: number }>();
   const now = new Date();
   for (let i = 5; i >= 0; i--) {
@@ -61,10 +54,9 @@ function monthlySeries(ops: DBOperation[]) {
     const key = `${d.getFullYear()}-${d.getMonth()}`;
     const b = buckets.get(key);
     if (b) {
-      const usd = o.usd_normalized_value != null
-        ? Number(o.usd_normalized_value)
-        : toUSD(Number(o.protected_amount || 0), o.currency);
-      b.volume += usd; b.count++;
+      const amount = getProtectedAmount(o);
+      b.volume += forceUsd ? toUsdAmount(amount, o.currency, rates) : amount;
+      b.count++;
     }
   }
   return Array.from(buckets.values());
@@ -72,14 +64,19 @@ function monthlySeries(ops: DBOperation[]) {
 
 function Dashboard() {
   const { data: ops = [], isLoading, error } = useAllOperations();
+  const { data: fx } = useQuery({
+    queryKey: ["fx", "usd-base-rates"],
+    queryFn: fetchUsdBaseRates,
+    staleTime: 5 * 60 * 1000,
+  });
   const { profile } = useAuth();
   const tier: UserTier = (profile?.tier as UserTier) ?? "STANDARD";
   const tierMeta = USER_TIER_BADGE[tier];
 
-  const k = computeKpis(ops);
-  const series = monthlySeries(k.counted);
-  const ccy = "USD"; // consolidação executiva sempre em USD (FX normalizado)
+  const k = computeKpis(ops, fx?.rates ?? { USD: 1 }, fx?.fxTimestamp ?? null);
+  const series = monthlySeries(k.counted, fx?.rates ?? { USD: 1 }, k.volumeTotal.isConverted);
   const isNewUser = ops.length === 0;
+  const fxTooltip = "Valores convertidos para USD com referência cambial em tempo real.";
 
   return (
     <AppShell topbar={
@@ -111,9 +108,9 @@ function Dashboard() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-            <Kpi icon={Shield}      label="Total Protegido"     value={formatCurrency(k.protectedAmount, ccy)} chip="Garantia ativa" chipClass="chip-cargo" featured />
-            <Kpi icon={Wallet}      label="Volume Financeiro"   value={formatCurrency(k.volume, ccy)}          chip={`${k.counted.length} operações`} chipClass="chip-info" />
-            <Kpi icon={TrendingUp}  label="Economia Acumulada"  value={formatCurrency(k.savings, ccy)}         chip="vs. carta de crédito" chipClass="chip-success" />
+            <Kpi icon={Shield}      label="Total Protegido"     value={formatCurrency(k.protectedTotal.amount, k.protectedTotal.currency)} chip="Garantia ativa" chipClass="chip-cargo" featured tooltip={k.protectedTotal.isConverted ? fxTooltip : undefined} />
+            <Kpi icon={Wallet}      label="Volume Financeiro"   value={formatCurrency(k.volumeTotal.amount, k.volumeTotal.currency)}          chip={`${k.counted.length} operações`} chipClass="chip-info" tooltip={k.volumeTotal.isConverted ? fxTooltip : undefined} />
+            <Kpi icon={TrendingUp}  label="Economia Acumulada"  value={formatCurrency(k.savingsTotal.amount, k.savingsTotal.currency)}         chip="vs. carta de crédito" chipClass="chip-success" tooltip={k.savingsTotal.isConverted ? fxTooltip : undefined} />
             <Kpi icon={CheckCircle2} label="Operações Concluídas" value={String(k.completedCount)}             chip={`${k.activeCount} ativas`} chipClass="chip-info" />
           </div>
 
@@ -138,7 +135,7 @@ function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-                    <Tooltip contentStyle={{ background: "var(--surface-container)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => formatCurrency(v, ccy)} labelFormatter={(l) => `Mês: ${l}`} />
+                    <Tooltip contentStyle={{ background: "var(--surface-container)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => formatCurrency(v, k.volumeTotal.currency)} labelFormatter={(l) => `Mês: ${l}`} />
                     <Area type="monotone" dataKey="volume" stroke="oklch(0.85 0.18 200)" strokeWidth={2} fill="url(#vol)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -169,7 +166,7 @@ function Dashboard() {
                         <div className="text-xs text-muted-foreground mt-0.5">{o.exporter_name || "—"} · {o.beneficiary_country || "—"}</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">{formatCurrency(Number(o.protected_amount), o.currency)}</div>
+                        <div className="font-semibold">{formatCurrency(getProtectedAmount(o), o.currency)}</div>
                         <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-0.5">{o.status}</div>
                       </div>
                     </Link>
@@ -183,10 +180,10 @@ function Dashboard() {
                 <Shield className="h-4 w-4 text-secondary" /> Resumo Financeiro
               </h2>
               <div className="space-y-4 text-sm">
-                <Row label="Total protegido"    value={formatCurrency(k.protectedAmount, ccy)} highlight />
-                <Row label="Volume transacionado" value={formatCurrency(k.volume, ccy)} />
-                <Row label="Fees pagos"          value={formatCurrency(k.fees, ccy)} />
-                <Row label="Economia gerada"     value={formatCurrency(k.savings, ccy)} />
+                <Row label="Total protegido"    value={formatCurrency(k.protectedTotal.amount, k.protectedTotal.currency)} highlight />
+                <Row label="Volume transacionado" value={formatCurrency(k.volumeTotal.amount, k.volumeTotal.currency)} />
+                <Row label="Fees pagos"          value={formatCurrency(k.feesTotal.amount, k.feesTotal.currency)} />
+                <Row label="Economia gerada"     value={formatCurrency(k.savingsTotal.amount, k.savingsTotal.currency)} />
                 <div className="h-px bg-border my-2" />
                 <Row label="Ativas"    value={String(k.activeCount)} />
                 <Row label="Concluídas" value={String(k.completedCount)} />
@@ -199,12 +196,13 @@ function Dashboard() {
   );
 }
 
-function Kpi({ icon: Icon, label, value, chip, chipClass, featured }: { icon: any; label: string; value: string; chip: string; chipClass: string; featured?: boolean }) {
+function Kpi({ icon: Icon, label, value, chip, chipClass, featured, tooltip }: { icon: any; label: string; value: string; chip: string; chipClass: string; featured?: boolean; tooltip?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
       className={"card-surface p-6 " + (featured ? "relative overflow-hidden" : "")}
       style={featured ? { background: "linear-gradient(135deg, oklch(0.26 0.10 265 / 0.9), oklch(0.28 0.16 320 / 0.7))" } : undefined}
+      title={tooltip}
     >
       <div className="flex justify-between items-start">
         <Icon className="h-5 w-5 text-secondary" />
