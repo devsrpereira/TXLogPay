@@ -1,187 +1,660 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
+import { useMemo, useState } from "react";
 import {
-  ArrowRight, FileText, Lock, Radar, Zap, Shield, Mail, Share2,
+  ArrowRight,
+  ShieldCheck,
+  Globe2,
+  Layers,
+  Network,
+  Lock,
+  Activity,
+  Banknote,
+  FileSearch,
+  Workflow,
+  Cpu,
+  CheckCircle2,
+  XCircle,
+  TrendingDown,
+  Clock,
+  Building2,
+  Code2,
+  LineChart,
+  Scale,
+  Mail,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "TXLOGPAY — Pagamentos liberados após aprovação alfandegária" },
-      { name: "description", content: "Deposite uma única vez. O TXLOGPAY protege o pagamento e libera automaticamente quando a carga é aprovada pela Receita Federal." },
+      { title: "TXLOGPAY — Escrow Logístico e Liquidação Internacional via Blockchain" },
+      {
+        name: "description",
+        content:
+          "Plataforma enterprise de trade finance. Reduza risco de contraparte, elimine custos de carta de crédito e libere pagamentos internacionais com escrow logístico on-chain.",
+      },
+      { property: "og:title", content: "TXLOGPAY — Trade Finance Infrastructure" },
+      {
+        property: "og:description",
+        content:
+          "Escrow logístico digital, liquidação internacional via Stellar e trilha auditável para operações de comércio exterior.",
+      },
     ],
   }),
   component: Landing,
 });
 
-const STEPS = [
-  { tag: "PASSO 01", icon: FileText, title: "Documentos enviados", desc: "Fatura comercial e Packing List processados via OCR inteligente.", chip: "Concluído", chipClass: "chip-success" },
-  { tag: "PASSO 02", icon: Lock, title: "Pagamento protegido", desc: "Fundos mantidos em custódia segura vinculada ao BL da carga.", chip: "Cargo Protection Ativo", chipClass: "chip-cargo" },
-  { tag: "PASSO 03", icon: Radar, title: "Análise alfandegária", desc: "Monitoramento em tempo real dos canais de parametrização.", chip: "Em andamento", chipClass: "chip-info" },
-  { tag: "FINAL", icon: Zap, title: "Liberação Instantânea", desc: "Carga aprovada. Pagamento liberado em menos de 10 segundos.", chip: "Sucesso Automático", chipClass: "chip-cargo" },
+const COMPARISON = [
+  { label: "Custo médio da operação", legacy: "1,5% – 3,0% + tarifas", tx: "1,00% – 1,50% all-in" },
+  { label: "Tempo de emissão / setup", legacy: "5 – 15 dias úteis", tx: "Minutos (self-service)" },
+  { label: "Liberação ao exportador", legacy: "Documental, manual", tx: "Automática on-chain" },
+  { label: "Risco de contraparte", legacy: "Mitigado por banco emissor", tx: "Mitigado por escrow digital" },
+  { label: "Trilha de auditoria", legacy: "Documentos físicos e SWIFT", tx: "Imutável em blockchain" },
+  { label: "Capital de giro", legacy: "Bloqueado em colateral", tx: "Liberado por milestone" },
+];
+
+const FLOW = [
+  { icon: FileSearch, title: "Operação registrada", desc: "Importador conecta a operação Siscomex e define beneficiário internacional." },
+  { icon: Lock, title: "Garantia em custódia", desc: "Valor é depositado em escrow digital tokenizado na rede Stellar." },
+  { icon: Activity, title: "Monitoramento logístico", desc: "Eventos aduaneiros e de transporte são validados em tempo real." },
+  { icon: Workflow, title: "Milestones verificadas", desc: "Cada etapa logística destrava uma fração do pagamento programado." },
+  { icon: Banknote, title: "Settlement automático", desc: "Liberação on-chain ao exportador após confirmação final da carga." },
+];
+
+const BENEFITS = [
+  { icon: ShieldCheck, title: "Redução de risco de contraparte", desc: "Garantia financeira vinculada a eventos reais de movimentação da carga." },
+  { icon: Globe2, title: "Liquidação internacional rápida", desc: "Settlement cross-border em segundos via rede Stellar e anchors regulados." },
+  { icon: Scale, title: "Compliance auditável", desc: "Trilha imutável aderente a SISBACEN, AML e políticas internas de procurement." },
+  { icon: Network, title: "Integração logística", desc: "APIs com ERPs, TMS, despachantes e provedores de tracking marítimo." },
+  { icon: Layers, title: "Custódia digital regulada", desc: "Fundos segregados em estrutura de custódia auditada e segregação patrimonial." },
+  { icon: Cpu, title: "Smart settlement", desc: "Regras programáveis de liberação por milestone, parcial ou condicional." },
+  { icon: FileSearch, title: "Histórico imutável", desc: "Cada evento registrado on-chain para auditoria, disputa e governança." },
+  { icon: TrendingDown, title: "Economia vs carta de crédito", desc: "Até 60% de redução de custo financeiro frente a LC tradicional." },
+];
+
+const PLANS = [
+  {
+    name: "Starter",
+    volume: "Até US$ 500k / mês",
+    rate: "1,50%",
+    features: ["Self-service", "Até 3 usuários", "Onboarding automático", "4 milestones logísticas", "Suporte por e-mail"],
+    cta: "Começar agora",
+    href: "/signup",
+    highlight: false,
+  },
+  {
+    name: "Growth",
+    volume: "US$ 500k – 5M / mês",
+    rate: "1,25%",
+    features: ["Até 10 usuários", "SLA 4h", "Integrações ERP / TMS", "Milestones ilimitadas", "CSM compartilhado"],
+    cta: "Falar com especialista",
+    href: "/contato",
+    highlight: true,
+  },
+  {
+    name: "Enterprise",
+    volume: "Acima de US$ 5M / mês",
+    rate: "1,00%",
+    features: ["Usuários ilimitados", "SLA 1h", "API white-label", "Contrato anual", "CSM dedicado", "Compliance avançado"],
+    cta: "Falar com especialista",
+    href: "/contato",
+    highlight: false,
+  },
+];
+
+const MODULES = [
+  { name: "Escrow multietapa", price: "+0,10%", desc: "Liberação fracionada por evento logístico." },
+  { name: "Webhooks em tempo real", price: "+0,05%", desc: "Push de eventos para sistemas internos." },
+  { name: "Disputa mediada on-chain", price: "+0,15%", desc: "Arbitragem registrada em ledger imutável." },
+  { name: "Compliance SISBACEN / AML", price: "+0,08%", desc: "Reporting regulatório e screening contínuo." },
+];
+
+const BUYERS = [
+  {
+    icon: Code2,
+    tag: "Starter / Dev",
+    title: "Times técnicos e early adopters",
+    points: ["Trial rápido", "Sandbox completo", "API REST simples", "SDK TypeScript"],
+  },
+  {
+    icon: LineChart,
+    tag: "Growth / CFO",
+    title: "Diretores financeiros",
+    points: ["ROI claro vs carta de crédito", "Libera capital de giro", "Reduz custo financeiro", "Previsibilidade de fluxo"],
+  },
+  {
+    icon: Building2,
+    tag: "Enterprise / Procurement",
+    title: "Procurement e governança",
+    points: ["Trilha auditável blockchain", "Controles de compliance", "Governança financeira", "Auditoria imutável"],
+  },
+];
+
+const COMPLIANCE = [
+  { icon: FileSearch, title: "Trilha imutável", desc: "Cada operação registrada com hash criptográfico verificável." },
+  { icon: ShieldCheck, title: "AML & KYC contínuos", desc: "Screening em todas as contrapartes e beneficiários internacionais." },
+  { icon: Scale, title: "SISBACEN ready", desc: "Estrutura preparada para reporting cambial e regulatório." },
+  { icon: Activity, title: "Smart audit trail", desc: "Eventos logísticos, financeiros e operacionais correlacionados." },
 ];
 
 function Landing() {
+  const [volume, setVolume] = useState<number>(2_000_000);
+  const savings = useMemo(() => {
+    const lcCost = volume * 0.025; // 2.5% LC tradicional
+    const txCost = volume * 0.0125; // 1.25% TXLOGPAY Growth
+    const saved = lcCost - txCost;
+    const annual = saved * 12;
+    return { monthly: saved, annual, lcCost, txCost };
+  }, [volume]);
+
   return (
     <div className="min-h-screen">
       {/* Nav */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/40 border-b border-border">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <Logo className="h-8" />
-            <span className="text-secondary font-mono text-xs uppercase tracking-widest">Platform</span>
+            <span className="text-muted-foreground font-mono text-[10px] uppercase tracking-[0.2em] hidden sm:inline">
+              Trade Finance Infrastructure
+            </span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <a href="#logistics" className="hover:text-foreground">Logistics</a>
-            <a href="#payments" className="hover:text-foreground">Payments</a>
-            <a href="#security" className="hover:text-foreground">Security</a>
+          <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
+            <a href="#problema" className="hover:text-foreground transition">Problema</a>
+            <a href="#fluxo" className="hover:text-foreground transition">Como funciona</a>
+            <a href="#beneficios" className="hover:text-foreground transition">Benefícios</a>
+            <a href="#planos" className="hover:text-foreground transition">Planos</a>
+            <a href="#economia" className="hover:text-foreground transition">Economia</a>
+            <a href="#compliance" className="hover:text-foreground transition">Compliance</a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm hover:text-secondary">Entrar</Link>
-            <Link to="/dashboard" className="btn-primary rounded-full px-5 py-2 text-sm font-semibold">Começar</Link>
+            <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition">Entrar</Link>
+            <Link to="/signup" className="btn-primary rounded-md px-4 py-2 text-sm font-semibold">
+              Falar com especialista
+            </Link>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-          <Logo className="h-20 mx-auto mb-10" />
-          <h1 className="text-4xl md:text-6xl font-bold leading-[1.05] text-gradient">
-            Pagamentos internacionais<br />liberados automaticamente<br />após aprovação da alfândega.
-          </h1>
-          <p className="mt-8 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Deposite uma única vez. O TXLOGPAY protege o pagamento e libera automaticamente
-            quando a carga for aprovada. Tecnologia financeira para o futuro do comércio exterior.
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link to="/operacoes/conectar" className="btn-primary rounded-xl px-7 py-3.5 font-semibold inline-flex items-center gap-2">
-              Criar Operação <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link to="/dashboard" className="rounded-xl px-7 py-3.5 font-semibold border border-border hover:bg-surface-container transition">
-              Ver Demonstração
-            </Link>
-          </div>
-        </motion.div>
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="lg:col-span-7"
+          >
+            <span className="chip chip-info">Stellar · Escrow Digital · Trade Finance</span>
+            <h1 className="mt-6 text-4xl md:text-6xl font-bold leading-[1.05] tracking-tight">
+              Pagamentos internacionais com{" "}
+              <span className="text-gradient">escrow logístico</span> via blockchain.
+            </h1>
+            <p className="mt-6 text-lg text-muted-foreground max-w-2xl leading-relaxed">
+              Reduza risco de contraparte, elimine custos de carta de crédito e libere pagamentos
+              internacionais apenas após confirmação logística — com trilha imutável, compliance auditável
+              e settlement programável.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/signup" className="btn-primary rounded-md px-6 py-3 font-semibold inline-flex items-center gap-2">
+                Falar com especialista <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a href="#fluxo" className="rounded-md px-6 py-3 font-semibold border border-border hover:bg-surface-container transition">
+                Ver como funciona
+              </a>
+            </div>
+            <div className="mt-10 grid grid-cols-3 gap-6 max-w-xl">
+              {[
+                { k: "60%", v: "Economia vs LC" },
+                { k: "<10s", v: "Settlement on-chain" },
+                { k: "100%", v: "Auditável" },
+              ].map((s) => (
+                <div key={s.v}>
+                  <div className="text-2xl md:text-3xl font-bold text-gradient">{s.k}</div>
+                  <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-mono">{s.v}</div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Mock operational panel */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="lg:col-span-5"
+          >
+            <div className="card-surface p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                  <span className="pulse-dot relative pl-4" />
+                  Operação ativa
+                </div>
+                <span className="font-mono text-[10px] tracking-widest text-muted-foreground">TX-2026-0481</span>
+              </div>
+              <div className="mt-5">
+                <div className="text-xs text-muted-foreground font-mono uppercase tracking-widest">Valor em garantia</div>
+                <div className="text-3xl font-bold mt-1">USD 1.240.500,00</div>
+                <div className="mt-1 text-xs text-muted-foreground">Beneficiário: Shenzhen Trade Co. · Stellar Anchor</div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                {[
+                  { t: "Operação criada", s: "Siscomex sincronizado", c: "chip-success" },
+                  { t: "Escrow tokenizado", s: "Hash 0x9c…f21a", c: "chip-info" },
+                  { t: "Embarque confirmado", s: "BL MSC-RX9821", c: "chip-success" },
+                  { t: "Desembaraço pendente", s: "Aguardando canal", c: "chip-warning" },
+                ].map((r, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg glass px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium">{r.t}</div>
+                      <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">{r.s}</div>
+                    </div>
+                    <span className={"chip " + r.c}>{r.c.replace("chip-", "")}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 pt-5 border-t border-border flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Cpu className="h-3.5 w-3.5" /> Smart contract
+                </div>
+                <span className="font-mono text-secondary">3/5 milestones liberadas</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </section>
 
-      {/* Steps */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {STEPS.map((s, i) => (
+      {/* Trust strip */}
+      <section className="border-y border-border bg-surface-container-low/40">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-6">
+          <span className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
+            Infraestrutura compatível com
+          </span>
+          <div className="flex flex-wrap gap-6 opacity-70">
+            {["STELLAR", "SISCOMEX", "SWIFT GPI", "MAERSK", "MSC", "SAP", "ORACLE"].map((n) => (
+              <span key={n} className="font-mono text-xs tracking-[0.2em] text-muted-foreground">{n}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Problema de mercado */}
+      <section id="problema" className="max-w-7xl mx-auto px-6 py-24">
+        <div className="max-w-3xl">
+          <span className="chip chip-info">Problema de mercado</span>
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+            Comércio exterior ainda opera com infraestrutura financeira do século passado.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Cartas de crédito, intermediação bancária e conciliação manual travam capital,
+            aumentam custo e mantêm risco operacional elevado.
+          </p>
+        </div>
+
+        <div className="mt-12 grid lg:grid-cols-2 gap-6">
+          <div className="card-surface p-8">
+            <div className="flex items-center gap-2 text-destructive font-mono text-xs uppercase tracking-widest">
+              <XCircle className="h-4 w-4" /> Sistema tradicional
+            </div>
+            <h3 className="mt-3 text-xl font-semibold">Carta de crédito & SWIFT</h3>
+            <ul className="mt-6 space-y-3 text-sm">
+              {COMPARISON.map((c) => (
+                <li key={c.label} className="flex justify-between gap-4 border-b border-border pb-2 last:border-0">
+                  <span className="text-muted-foreground">{c.label}</span>
+                  <span className="text-right">{c.legacy}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div
+            className="card-surface p-8 relative overflow-hidden"
+            style={{ borderColor: "color-mix(in oklab, var(--primary-glow) 35%, transparent)" }}
+          >
+            <div
+              className="absolute inset-0 opacity-30 pointer-events-none"
+              style={{ background: "var(--gradient-brand-soft)" }}
+            />
+            <div className="relative">
+              <div className="flex items-center gap-2 text-secondary font-mono text-xs uppercase tracking-widest">
+                <CheckCircle2 className="h-4 w-4" /> TXLOGPAY
+              </div>
+              <h3 className="mt-3 text-xl font-semibold">Escrow logístico on-chain</h3>
+              <ul className="mt-6 space-y-3 text-sm">
+                {COMPARISON.map((c) => (
+                  <li key={c.label} className="flex justify-between gap-4 border-b border-border pb-2 last:border-0">
+                    <span className="text-muted-foreground">{c.label}</span>
+                    <span className="text-right font-medium">{c.tx}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Como funciona */}
+      <section id="fluxo" className="max-w-7xl mx-auto px-6 py-24">
+        <div className="max-w-3xl">
+          <span className="chip chip-info">Como funciona</span>
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+            Cinco etapas, uma trilha auditável.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            O capital é programado para liberação automática conforme os eventos logísticos
+            são confirmados pela infraestrutura aduaneira e portuária.
+          </p>
+        </div>
+
+        <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {FLOW.map((f, i) => (
             <motion.div
-              key={s.title}
-              initial={{ opacity: 0, y: 20 }}
+              key={f.title}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className={"card-surface card-surface-hover p-6 relative " + (i === 3 ? "bg-gradient-to-br from-[oklch(0.30_0.10_265)] to-[oklch(0.28_0.14_320)]" : "")}
+              transition={{ delay: i * 0.07 }}
+              className="card-surface card-surface-hover p-5 relative"
             >
-              <span className="chip chip-info text-[10px]">{s.tag}</span>
-              <s.icon className="h-7 w-7 mt-5 text-secondary" />
-              <h3 className="mt-4 text-lg font-semibold">{s.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
-              <div className="mt-5">
-                <span className={"chip " + s.chipClass}>{s.chip}</span>
+              <div className="font-mono text-[10px] tracking-widest text-muted-foreground">
+                ETAPA {String(i + 1).padStart(2, "0")}
               </div>
+              <f.icon className="h-6 w-6 mt-3 text-secondary" />
+              <div className="mt-3 font-semibold">{f.title}</div>
+              <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Compatible logos */}
-      <section className="max-w-6xl mx-auto px-6 py-16 text-center">
-        <h2 className="text-2xl md:text-3xl font-semibold">Compatível com fluxos globais de comércio exterior</h2>
-        <p className="mt-3 text-sm text-muted-foreground">Construído para importadores, exportadores e despachantes aduaneiros de alta performance.</p>
-        <div className="mt-10 grid grid-cols-3 md:grid-cols-7 gap-6 opacity-70">
-          {["MAERSK", "MSC", "CMA", "HAPAG", "EVERGREEN", "COSCO", "ONE"].map(n => (
-            <div key={n} className="h-14 rounded-lg glass grid place-items-center font-mono text-xs tracking-widest">{n}</div>
+      {/* Benefícios */}
+      <section id="beneficios" className="max-w-7xl mx-auto px-6 py-24">
+        <div className="max-w-3xl">
+          <span className="chip chip-info">Benefícios</span>
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+            Infraestrutura institucional para operações cross-border.
+          </h2>
+        </div>
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {BENEFITS.map((b) => (
+            <div key={b.title} className="card-surface card-surface-hover p-6">
+              <b.icon className="h-6 w-6 text-secondary" />
+              <div className="mt-4 font-semibold">{b.title}</div>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{b.desc}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* Visibility section */}
-      <section id="logistics" className="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <span className="chip chip-info">Visibilidade Total</span>
-          <h2 className="mt-5 text-3xl md:text-4xl font-bold leading-tight">Gestão Aduaneira em Tempo Real</h2>
-          <p className="mt-4 text-muted-foreground max-w-lg">
-            Acompanhe cada etapa da sua operação internacional com dados precisos da Receita Federal e portos.
-            Do desembaraço à liquidação financeira, tudo em um só lugar.
+      {/* Planos */}
+      <section id="planos" className="max-w-7xl mx-auto px-6 py-24">
+        <div className="max-w-3xl">
+          <span className="chip chip-info">Planos</span>
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+            Pricing por volume operacional.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Taxa única all-in sobre o valor liquidado. Sem mensalidades, sem setup, sem custos ocultos.
           </p>
-          <ul className="mt-6 space-y-3 text-sm">
-            {["Timeline aduaneira automatizada", "Cards de pagamento protegido em custódia", "Confirmação de liberação em milissegundos"].map(t => (
-              <li key={t} className="flex items-center gap-3">
-                <span className="grid place-items-center h-5 w-5 rounded-full" style={{ background: "var(--gradient-brand)" }}>
-                  <Shield className="h-3 w-3 text-primary-foreground" />
-                </span>
-                {t}
-              </li>
-            ))}
-          </ul>
         </div>
-        <div className="card-surface p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-1.5">
-              <span className="h-3 w-3 rounded-full bg-destructive/60"></span>
-              <span className="h-3 w-3 rounded-full bg-warning/60"></span>
-              <span className="h-3 w-3 rounded-full bg-success/60"></span>
+
+        <div className="mt-12 grid lg:grid-cols-3 gap-6">
+          {PLANS.map((p) => (
+            <div
+              key={p.name}
+              className={
+                "card-surface p-8 relative " +
+                (p.highlight ? "ring-1 ring-primary-glow/40 shadow-[var(--shadow-glow-primary)]" : "")
+              }
+            >
+              {p.highlight && (
+                <span className="chip chip-cargo absolute -top-3 left-6">Mais escolhido</span>
+              )}
+              <div className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{p.name}</div>
+              <div className="mt-2 text-sm text-muted-foreground">{p.volume}</div>
+              <div className="mt-6 flex items-baseline gap-1">
+                <span className="text-5xl font-bold text-gradient">{p.rate}</span>
+                <span className="text-sm text-muted-foreground">all-in</span>
+              </div>
+              <ul className="mt-6 space-y-2.5 text-sm">
+                {p.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to={p.href}
+                className={
+                  "mt-8 w-full inline-flex items-center justify-center rounded-md px-5 py-3 text-sm font-semibold transition " +
+                  (p.highlight
+                    ? "btn-primary"
+                    : "border border-border hover:bg-surface-container")
+                }
+              >
+                {p.cta}
+              </Link>
             </div>
-            <span className="font-mono text-[10px] tracking-widest text-muted-foreground">PAINEL TXLOGPAY</span>
+          ))}
+        </div>
+      </section>
+
+      {/* Módulos adicionais */}
+      <section className="max-w-7xl mx-auto px-6 py-24">
+        <div className="grid lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-4">
+            <span className="chip chip-info">Módulos de expansão</span>
+            <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+              Ative apenas o que sua operação precisa.
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Módulos opcionais somados à taxa base — sem contrato adicional, sem implementação técnica.
+            </p>
           </div>
-          <div className="grid grid-cols-2 gap-4 mt-6">
-            <div className="rounded-xl p-4 glass">
-              <div className="text-[10px] font-mono text-muted-foreground tracking-widest">NAVIO MSC ROSA</div>
-              <div className="font-semibold mt-1">SFS001</div>
-              <div className="flex justify-between text-xs mt-3 text-muted-foreground"><span>Partida 12/05</span><span>Chegada 28/05</span></div>
-            </div>
-            <div className="rounded-xl p-4 glass">
-              <div className="text-[10px] font-mono text-muted-foreground tracking-widest">VALOR</div>
-              <div className="font-semibold mt-1 text-gradient">USD 45.200,00</div>
-              <span className="chip chip-cargo mt-2 text-[9px]">Protegido em custódia</span>
-            </div>
-          </div>
-          <div className="mt-4 p-4 rounded-xl glass space-y-3 text-sm">
-            {[
-              { t: "08:41 — DI registrada", s: "Receita Federal do Brasil", i: Shield, c: "text-secondary" },
-              { t: "08:43 — Canal verde identificado", s: "Parametrização concluída", i: Shield, c: "text-success" },
-              { t: "08:43 — Pagamento liberado automaticamente", s: "Liquidação instantânea via TXLOGPAY", i: Zap, c: "text-accent" },
-            ].map((r, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <r.i className={"h-4 w-4 mt-0.5 " + r.c} />
+          <div className="lg:col-span-8 grid sm:grid-cols-2 gap-4">
+            {MODULES.map((m) => (
+              <div key={m.name} className="card-surface p-6 flex justify-between items-start gap-4">
                 <div>
-                  <div className="font-medium">{r.t}</div>
-                  <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest">{r.s}</div>
+                  <div className="font-semibold">{m.name}</div>
+                  <p className="mt-1 text-sm text-muted-foreground">{m.desc}</p>
                 </div>
+                <span className="font-mono text-sm text-secondary whitespace-nowrap">{m.price}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Buyers */}
+      <section className="max-w-7xl mx-auto px-6 py-24">
+        <div className="max-w-3xl">
+          <span className="chip chip-info">Quem utiliza</span>
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+            Construído para times financeiros, técnicos e de procurement.
+          </h2>
+        </div>
+        <div className="mt-12 grid md:grid-cols-3 gap-6">
+          {BUYERS.map((b) => (
+            <div key={b.tag} className="card-surface p-6">
+              <div className="flex items-center gap-2">
+                <b.icon className="h-5 w-5 text-secondary" />
+                <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">{b.tag}</span>
+              </div>
+              <div className="mt-4 text-lg font-semibold">{b.title}</div>
+              <ul className="mt-4 space-y-2 text-sm">
+                {b.points.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-muted-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 shrink-0" />
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Calculadora de economia */}
+      <section id="economia" className="max-w-7xl mx-auto px-6 py-24">
+        <div className="card-surface p-8 md:p-12 grid lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <span className="chip chip-info">Calculadora</span>
+            <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+              Quanto sua empresa economiza vs carta de crédito?
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Compare o custo financeiro estimado de LC tradicional (2,5%) com a taxa TXLOGPAY Growth (1,25%).
+            </p>
+
+            <label className="block mt-8 text-sm font-mono uppercase tracking-widest text-muted-foreground">
+              Volume mensal (USD)
+            </label>
+            <Input
+              type="number"
+              min={100000}
+              step={100000}
+              value={volume}
+              onChange={(e) => setVolume(Math.max(0, Number(e.target.value) || 0))}
+              className="mt-2 h-12 text-lg font-semibold"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setVolume(v)}
+                  className="text-xs font-mono px-3 py-1.5 rounded-md border border-border hover:bg-surface-container transition"
+                >
+                  US$ {(v / 1_000_000).toFixed(1)}M
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="rounded-xl glass p-6">
+              <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                Economia mensal estimada
+              </div>
+              <div className="mt-2 text-4xl md:text-5xl font-bold text-gradient">
+                US$ {savings.monthly.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl glass p-5">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                  Economia anual
+                </div>
+                <div className="mt-1 text-xl font-semibold">
+                  US$ {savings.annual.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                </div>
+              </div>
+              <div className="rounded-xl glass p-5">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                  Tempo de liquidação
+                </div>
+                <div className="mt-1 text-xl font-semibold flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-secondary" /> ~10s
+                </div>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground font-mono">
+              Custo LC: US$ {savings.lcCost.toLocaleString("en-US", { maximumFractionDigits: 0 })} ·
+              Custo TXLOGPAY: US$ {savings.txCost.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Compliance */}
+      <section id="compliance" className="max-w-7xl mx-auto px-6 py-24">
+        <div className="max-w-3xl">
+          <span className="chip chip-info">Compliance & Governança</span>
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight">
+            Auditoria imutável e governança operacional por design.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Cada evento financeiro e logístico é registrado em ledger criptográfico, com integração
+            nativa a fluxos regulatórios brasileiros e internacionais.
+          </p>
+        </div>
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {COMPLIANCE.map((c) => (
+            <div key={c.title} className="card-surface p-6">
+              <c.icon className="h-6 w-6 text-secondary" />
+              <div className="mt-4 font-semibold">{c.title}</div>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{c.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA final */}
+      <section className="max-w-7xl mx-auto px-6 pb-24">
+        <div
+          className="card-surface p-10 md:p-14 text-center relative overflow-hidden"
+          style={{ borderColor: "color-mix(in oklab, var(--primary-glow) 30%, transparent)" }}
+        >
+          <div
+            className="absolute inset-0 opacity-40 pointer-events-none"
+            style={{ background: "var(--gradient-brand-soft)" }}
+          />
+          <div className="relative">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight max-w-3xl mx-auto">
+              Pronto para substituir sua carta de crédito por infraestrutura programável?
+            </h2>
+            <p className="mt-5 text-muted-foreground max-w-2xl mx-auto">
+              Fale com nosso time de trade finance para uma análise de redução de custo e desenho
+              operacional sob medida.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link to="/signup" className="btn-primary rounded-md px-7 py-3.5 font-semibold inline-flex items-center gap-2">
+                Falar com especialista <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/dashboard" className="rounded-md px-7 py-3.5 font-semibold border border-border hover:bg-surface-container transition">
+                Ver demonstração
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t border-border mt-12">
+      <footer className="border-t border-border">
         <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-8 text-sm">
           <div>
             <Logo className="h-7" />
-            <p className="text-muted-foreground mt-3 text-xs">Infraestrutura financeira para o comércio exterior moderno.</p>
+            <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+              Infraestrutura financeira programável para comércio exterior moderno.
+              Escrow logístico, settlement on-chain e compliance auditável.
+            </p>
           </div>
           <div>
-            <div className="font-semibold mb-3">Produto</div>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>Platform</li><li>Payments</li>
+            <div className="font-semibold mb-3">Plataforma</div>
+            <ul className="space-y-2 text-muted-foreground text-xs">
+              <li><a href="#fluxo" className="hover:text-foreground">Como funciona</a></li>
+              <li><a href="#beneficios" className="hover:text-foreground">Benefícios</a></li>
+              <li><a href="#planos" className="hover:text-foreground">Planos</a></li>
+              <li><a href="#economia" className="hover:text-foreground">Calculadora</a></li>
             </ul>
           </div>
           <div>
-            <div className="font-semibold mb-3">Legal</div>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>Privacidade</li><li>Termos</li><li>Conformidade</li>
+            <div className="font-semibold mb-3">Institucional</div>
+            <ul className="space-y-2 text-muted-foreground text-xs">
+              <li>Compliance</li>
+              <li>Segurança</li>
+              <li>Privacidade</li>
+              <li>Termos</li>
             </ul>
           </div>
-          <div className="md:text-right text-muted-foreground text-xs flex md:justify-end items-end gap-3">
-            <span>© 2024 TXLOGPAY Global Trade Systems.</span>
-            <Share2 className="h-4 w-4" /><Mail className="h-4 w-4" />
+          <div className="md:text-right text-muted-foreground text-xs space-y-2">
+            <div>© 2026 TXLOGPAY Global Trade Systems.</div>
+            <div className="flex md:justify-end items-center gap-2">
+              <Mail className="h-3.5 w-3.5" /> contato@txlogpay.com
+            </div>
           </div>
         </div>
       </footer>
