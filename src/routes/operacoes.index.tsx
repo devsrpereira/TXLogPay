@@ -13,7 +13,7 @@ export const Route = createFileRoute("/operacoes/")({
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
   ACTIVE:    { label: "Ativa",      color: "var(--secondary)" },
-  COMPLETED:   { label: "Liquidada",  color: "var(--success)" },
+  COMPLETED:   { label: "Concluída",  color: "var(--success)" },
   CANCELLED: { label: "Cancelada",  color: "var(--destructive)" },
 };
 

@@ -14,7 +14,7 @@ export const Route = createFileRoute("/operacoes/$id")({
 const STATUS_LABELS: Record<string, { label: string; tone: string }> = {
   PENDING_PAYMENT: { label: "Aguardando pagamento", tone: "chip-warning" },
   ACTIVE:          { label: "Ativa · Em monitoramento", tone: "chip-info" },
-  COMPLETED:         { label: "Liquidada",       tone: "chip-success" },
+  COMPLETED:         { label: "Concluída",       tone: "chip-success" },
   CANCELLED:       { label: "Cancelada",       tone: "chip-warning" },
 };
 
