@@ -153,146 +153,167 @@ function OperacaoDetail() {
         </div>
       </div>
 
-      {/* ---------- Upload area (only while pending / under review) ---------- */}
-      {showUpload && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card-surface p-6 mt-5 ring-1 ring-secondary/30 shadow-[0_0_24px_-12px_oklch(0.66_0.11_235/0.6)]"
-        >
-          <div className="flex items-start gap-3 mb-4">
-            <Upload className="h-5 w-5 text-secondary mt-0.5" />
-            <div>
-              <h3 className="text-lg font-semibold">Enviar comprovante da garantia</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Anexe o comprovante de pagamento (PIX, TED ou SWIFT) para que a operação entre em monitoramento.
-              </p>
-            </div>
-          </div>
+      {/* ---------- Operational workspace: upload + timeline side-by-side ---------- */}
+      <div className="grid lg:grid-cols-2 gap-5 mt-5 items-start">
+        {/* LEFT — receipt + hackathon validation */}
+        <div className="space-y-5">
+          {showUpload ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="card-surface p-6 ring-1 ring-secondary/30 shadow-[0_0_24px_-12px_oklch(0.66_0.11_235/0.6)]"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <Upload className="h-5 w-5 text-secondary mt-0.5" />
+                <div>
+                  <h3 className="text-base font-semibold">Comprovante da garantia</h3>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Anexe o comprovante (PIX, TED ou SWIFT) para liberar o monitoramento.
+                  </p>
+                </div>
+              </div>
 
-          {hasReceipt ? (
-            <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex items-center gap-3">
+              {hasReceipt ? (
+                <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex items-center gap-3">
+                  <FileCheck2 className="h-5 w-5 text-success shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">{op.payment_receipt_name || "Comprovante enviado"}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                      {op.payment_submitted_at ? new Date(op.payment_submitted_at).toLocaleString("pt-BR") : "—"}
+                    </div>
+                  </div>
+                  {signedUrl && (
+                    <a href={signedUrl} target="_blank" rel="noreferrer"
+                      className="text-xs text-secondary hover:underline inline-flex items-center gap-1">
+                      <ExternalLink className="h-3.5 w-3.5" /> Ver
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <label
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault(); setDragOver(false);
+                      const f = e.dataTransfer.files?.[0]; if (f) setFile(f);
+                    }}
+                    className={
+                      "block rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all " +
+                      (dragOver
+                        ? "border-secondary bg-secondary/10"
+                        : file
+                          ? "border-success/40 bg-success/5"
+                          : "border-border hover:border-secondary/50 hover:bg-surface-container")
+                    }
+                  >
+                    <input type="file" accept="image/*,application/pdf" className="hidden"
+                      onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                    {file ? (
+                      <>
+                        <FileCheck2 className="h-6 w-6 text-success mx-auto mb-2" />
+                        <div className="text-sm font-semibold truncate">{file.name}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1 font-mono">
+                          {(file.size / 1024).toFixed(0)} KB · {file.type.split("/")[1]?.toUpperCase() || "FILE"}
+                        </div>
+                        <button
+                          onClick={(e) => { e.preventDefault(); setFile(null); }}
+                          className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" /> Remover
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                        <div className="text-sm font-medium">Arraste ou selecione o arquivo</div>
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
+                          PDF · JPG · PNG · até 10MB
+                        </div>
+                      </>
+                    )}
+                  </label>
+                  {errMsg && <div className="mt-3 text-xs text-destructive">{errMsg}</div>}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!file || uploading}
+                    className="btn-primary mt-4 w-full rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {uploading
+                      ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</>
+                      : <><Upload className="h-4 w-4" /> Enviar comprovante</>}
+                  </button>
+                </>
+              )}
+
+              {/* Hackathon validation — compact, aligned to upload */}
+              {showHackathon && (
+                <div className="mt-5 pt-5 border-t border-border/60 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Sparkles className="h-4 w-4 text-accent shrink-0" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">Validar garantia</span>
+                        <span className="chip text-[8px] font-mono uppercase tracking-widest"
+                          style={{ background: "color-mix(in oklab, var(--accent) 18%, transparent)", color: "var(--accent)" }}>
+                          Hackathon mode
+                        </span>
+                      </div>
+                      {!hasReceipt && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" /> Envie o comprovante para habilitar.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleValidate}
+                    disabled={validate.isPending || !hasReceipt}
+                    className="rounded-lg px-3.5 py-2 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    style={{ background: "var(--gradient-accent)" }}
+                    title={!hasReceipt ? "Envie o comprovante antes de validar" : "Validar garantia"}
+                  >
+                    {validate.isPending
+                      ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Validando</>
+                      : <><CheckCircle2 className="h-3.5 w-3.5" /> Validar</>}
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          ) : hasReceipt ? (
+            /* Collapsed receipt summary once operation is in monitoring/release */
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="card-surface p-5 flex items-center gap-3"
+            >
               <FileCheck2 className="h-5 w-5 text-success shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{op.payment_receipt_name || "Comprovante enviado"}</div>
-                <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                  Enviado em {op.payment_submitted_at ? new Date(op.payment_submitted_at).toLocaleString("pt-BR") : "—"}
+                <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Comprovante validado</div>
+                <div className="text-sm font-semibold truncate mt-0.5">{op.payment_receipt_name || "Comprovante recebido"}</div>
+                <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                  {op.payment_submitted_at ? new Date(op.payment_submitted_at).toLocaleString("pt-BR") : "—"}
                 </div>
               </div>
               {signedUrl && (
                 <a href={signedUrl} target="_blank" rel="noreferrer"
                   className="text-xs text-secondary hover:underline inline-flex items-center gap-1">
-                  <ExternalLink className="h-3.5 w-3.5" /> Visualizar
+                  <ExternalLink className="h-3.5 w-3.5" /> Ver
                 </a>
               )}
-            </div>
-          ) : (
-            <>
-              <label
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault(); setDragOver(false);
-                  const f = e.dataTransfer.files?.[0]; if (f) setFile(f);
-                }}
-                className={
-                  "block rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all " +
-                  (dragOver
-                    ? "border-secondary bg-secondary/10"
-                    : file
-                      ? "border-success/40 bg-success/5"
-                      : "border-border hover:border-secondary/50 hover:bg-surface-container")
-                }
-              >
-                <input type="file" accept="image/*,application/pdf" className="hidden"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-                {file ? (
-                  <>
-                    <FileCheck2 className="h-7 w-7 text-success mx-auto mb-2" />
-                    <div className="text-sm font-semibold truncate">{file.name}</div>
-                    <div className="text-xs text-muted-foreground mt-1 font-mono">
-                      {(file.size / 1024).toFixed(0)} KB · {file.type.split("/")[1]?.toUpperCase() || "FILE"}
-                    </div>
-                    <button
-                      onClick={(e) => { e.preventDefault(); setFile(null); }}
-                      className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" /> Remover
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-7 w-7 text-muted-foreground mx-auto mb-2" />
-                    <div className="text-sm font-medium">Arraste o comprovante ou clique para selecionar</div>
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-1">
-                      PDF · JPG · PNG · até 10MB
-                    </div>
-                  </>
-                )}
-              </label>
-              {errMsg && <div className="mt-3 text-xs text-destructive">{errMsg}</div>}
-              <button
-                onClick={handleSubmit}
-                disabled={!file || uploading}
-                className="btn-primary mt-4 w-full rounded-xl py-3 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {uploading
-                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</>
-                  : <><Upload className="h-4 w-4" /> Enviar comprovante</>}
-              </button>
-            </>
-          )}
-        </motion.div>
-      )}
+            </motion.div>
+          ) : null}
+        </div>
 
-      {/* ---------- Hackathon validation ---------- */}
-      {showHackathon && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card-surface p-5 mt-5 ring-1 ring-accent/40 flex flex-wrap items-center gap-4 justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-accent" />
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold">Validar garantia</h3>
-                <span className="chip text-[9px] font-mono uppercase tracking-widest"
-                  style={{ background: "color-mix(in oklab, var(--accent) 18%, transparent)", color: "var(--accent)" }}>
-                  Hackathon mode
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1 max-w-xl">
-                Botão temporário para simular a reconciliação manual do compliance e avançar a operação para monitoramento.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleValidate}
-            disabled={validate.isPending || !hasReceipt}
-            className="rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            style={{ background: "var(--gradient-accent)" }}
-            title={!hasReceipt ? "Envie o comprovante antes de validar" : "Validar garantia"}
-          >
-            {validate.isPending
-              ? <><Loader2 className="h-4 w-4 animate-spin" /> Validando...</>
-              : <><CheckCircle2 className="h-4 w-4" /> Validar garantia</>}
-          </button>
-          {!hasReceipt && (
-            <p className="text-[10px] text-muted-foreground w-full -mt-1 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" /> Envie o comprovante para habilitar a validação.
-            </p>
-          )}
-        </motion.div>
-      )}
-
-      {/* ---------- Timeline ---------- */}
-      <div className="card-surface p-6 mt-5">
-        <h3 className="text-lg font-semibold mb-5 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
-        </h3>
-        <OperationTimeline op={op} />
+        {/* RIGHT — Timeline */}
+        <div className="card-surface p-6">
+          <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
+          </h3>
+          <OperationTimeline op={op} />
+        </div>
       </div>
+
     </AppShell>
   );
 }
