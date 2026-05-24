@@ -700,9 +700,7 @@ function SidePanel({
 
         <div className="mt-4 space-y-2 text-sm p-3 rounded-xl glass">
           <BreakdownRow label="Valor protegido" value={formatCurrency(breakdown.gross_amount, currency)} />
-          <BreakdownRow label="Fee operacional" value={formatCurrency(breakdown.fee_amount, currency)} />
-          <BreakdownRow label="Taxa de custódia" value={formatCurrency(breakdown.custody_fee, currency)} />
-          <BreakdownRow label="Taxa de liquidação" value={formatCurrency(breakdown.settlement_fee, currency)} />
+          <BreakdownRow label="Taxa operacional TXLOGPAY" value={formatCurrency(breakdown.fee_amount, currency)} />
           <div className="h-px bg-border my-1" />
           <BreakdownRow
             label="Total da garantia"
@@ -721,9 +719,9 @@ function SidePanel({
         </h3>
         <div className="space-y-2 text-xs">
           <IntegrationRow label="Siscomex API" status="standby" />
-          <IntegrationRow label="Stellar Anchor" status="standby" />
-          <IntegrationRow label="Smart Contract Settlement" status="standby" />
-          <IntegrationRow label="Supabase Cloud" status="standby" />
+          <IntegrationRow label="Conta segregada — banco parceiro" status="standby" />
+          <IntegrationRow label="Liberação programada" status="standby" />
+          <IntegrationRow label="Auditoria operacional" status="standby" />
         </div>
       </div>
 
