@@ -153,10 +153,22 @@ function OperacaoDetail() {
         </div>
       </div>
 
-      {/* ---------- Operational workspace: upload + timeline side-by-side ---------- */}
+      {/* ---------- FX reference (USD conversion) ---------- */}
+      <FxReferenceCard op={op} />
+
+      {/* ---------- Operational workspace: timeline (left) + upload (right) ---------- */}
       <div className="grid lg:grid-cols-2 gap-5 mt-5 items-start">
-        {/* LEFT — receipt + hackathon validation */}
-        <div className="space-y-5">
+        {/* LEFT — Timeline */}
+        <div className="card-surface p-6 order-2 lg:order-1">
+          <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
+          </h3>
+          <OperationTimeline op={op} />
+        </div>
+
+        {/* RIGHT — receipt + hackathon validation */}
+        <div className="space-y-5 order-1 lg:order-2">
+
           {showUpload ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
