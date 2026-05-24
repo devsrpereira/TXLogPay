@@ -105,68 +105,36 @@ function NovaOperacao() {
 
   async function handleActivate() {
     if (!validateStep(3)) return;
+    if (!user?.id) {
+      setErrors({ _: "Sessão expirada. Faça login novamente." });
+      return;
+    }
     setSubmitting(true);
     try {
-      const op = await operationService.create({
-        user_id: user?.id ?? null,
-        incoterm: commercial.incoterm as Incoterm,
+      const op = await operationsDb.createPending({
+        user_id: user.id,
+        amount: breakdown.gross_amount,
+        fee_amount: breakdown.fee_amount + breakdown.custody_fee + breakdown.settlement_fee,
+        total_amount: breakdown.total_funding,
         currency: commercial.currency,
-        operation_value: commercial.operation_value,
+        incoterm: commercial.incoterm as Incoterm,
         release_trigger: commercial.release_trigger as ReleaseTrigger,
-        duimp: documentation.duimp,
+        exporter_name: beneficiary.exporter_name,
+        importer_name: user.user_metadata?.full_name || user.email || null,
+        bank_name: beneficiary.bank_name,
+        swift: beneficiary.swift,
+        iban: beneficiary.iban,
+        beneficiary_country: beneficiary.country,
+        beneficiary_city: beneficiary.city,
         invoice_number: documentation.invoice_number,
         bl_awb: documentation.bl_awb,
+        duimp: documentation.duimp,
         siscomex_reference: documentation.siscomex_reference,
-        beneficiary: {
-          id: "tmp",
-          operation_id: "tmp",
-          exporter_name: beneficiary.exporter_name,
-          bank_name: beneficiary.bank_name,
-          swift: beneficiary.swift,
-          iban: beneficiary.iban,
-          beneficiary_name: beneficiary.beneficiary_name,
-          country: beneficiary.country,
-          city: beneficiary.city,
-        },
-        escrow: escrowService.create({
-          operation_id: "tmp",
-          gross_amount: commercial.operation_value,
-          currency: commercial.currency,
-          tier,
-        }),
-        status: "PENDING_FUNDING",
       });
-
-      // Transition through funding → review → monitoring with proper events.
-      let next1 = eventEngine.apply(op, {
-        event_type: "FUNDING_RECEIVED",
-        description: `Garantia operacional recebida via ${guarantee.method.toUpperCase()}`,
-        source: "USER",
-        transition: "FUNDING_RECEIVED",
-      });
-      next1 = eventEngine.apply(next1, {
-        event_type: "REVIEW_APPROVED",
-        description: "Validação operacional automática concluída",
-        source: "TXLOGPAY",
-        transition: "REVIEW_APPROVED",
-      });
-      next1 = eventEngine.apply(next1, {
-        event_type: "MONITORING_STARTED",
-        description: "Monitoramento de eventos aduaneiros iniciado",
-        source: "TXLOGPAY",
-        transition: "MONITORING_STARTED",
-      });
-      next1 = eventEngine.apply(next1, {
-        event_type: "ANCHOR_RESERVED",
-        description: "Fundos reservados no Stellar Anchor (mock)",
-        source: "ANCHOR",
-        transition: "MONITORING_STARTED",
-      });
-
-      await operationService.update(op.id, { events: next1.events, status: next1.status });
-      setEscrow(next1.escrow ?? null);
-      setCurrent(next1);
-      setStep(4);
+      navigate({ to: "/operacoes/$id/pagamento", params: { id: op.id } });
+    } catch (e) {
+      console.error(e);
+      setErrors({ _: (e as Error).message });
     } finally {
       setSubmitting(false);
     }
