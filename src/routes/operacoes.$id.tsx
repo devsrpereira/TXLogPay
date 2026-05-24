@@ -10,7 +10,7 @@ import {
 import {
   useOperation, useSubmitReceipt, useValidatePayment,
 } from "@/hooks/use-operations";
-import { operationsDb } from "@/services/operations.db";
+import { operationsDb, type DBOperation } from "@/services/operations.db";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/formatters";
 import {
