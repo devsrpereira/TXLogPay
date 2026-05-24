@@ -31,13 +31,20 @@ export function getTotalFees(operation: FinancialOperation): number {
   return Number.isFinite(feeAmount) ? feeAmount : 0;
 }
 
+/**
+ * Garantia protegida = valor da operação (carga).
+ * A fee NÃO é deduzida — fee é receita TXLOGPAY, não garantia.
+ */
 export function getProtectedAmount(operation: FinancialOperation): number {
   const operationValue = Number(operation.operation_value ?? 0);
-  if (Number.isFinite(operationValue) && operationValue > 0) {
-    return Math.max(0, operationValue - getTotalFees(operation));
-  }
+  if (Number.isFinite(operationValue) && operationValue > 0) return operationValue;
   const protectedAmount = Number(operation.protected_amount ?? 0);
   return Number.isFinite(protectedAmount) ? protectedAmount : 0;
+}
+
+/** Total a pagar pelo importador = valor da operação + fee. */
+export function getTotalPayment(operation: FinancialOperation): number {
+  return getProtectedAmount(operation) + getTotalFees(operation);
 }
 
 export function toUsdAmount(value: number, currency: string = "USD", rates: FxRates = USD_FX_RATES): number {

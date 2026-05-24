@@ -712,15 +712,15 @@ function SidePanel({
         <div className="mt-4 space-y-2 text-sm p-3 rounded-xl glass">
           <BreakdownRow label="Valor da operação" value={formatCurrency(breakdown.gross_amount, currency)} />
           <BreakdownRow label="Taxa operacional TXLOGPAY" value={formatCurrency(breakdown.fee_amount, currency)} />
-          <BreakdownRow label="Valor protegido líquido" value={formatCurrency(breakdown.net_exporter_amount, currency)} />
+          <BreakdownRow label="Garantia protegida" value={formatCurrency(breakdown.gross_amount, currency)} />
           <div className="h-px bg-border my-1" />
           <BreakdownRow
-            label="Total da garantia"
+            label="Total a pagar"
             value={formatCurrency(breakdown.total_funding, currency)}
             highlight
           />
           <div className="text-[10px] font-mono text-muted-foreground pt-1">
-            Líquido ao exportador: {formatCurrency(breakdown.net_exporter_amount, currency)}
+            Garantia ao exportador: {formatCurrency(breakdown.gross_amount, currency)} · Receita TXLOGPAY: {formatCurrency(breakdown.fee_amount, currency)}
           </div>
         </div>
       </div>
