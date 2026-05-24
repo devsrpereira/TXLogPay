@@ -145,10 +145,10 @@ function Pagamentos() {
   );
 }
 
-function Kpi({ icon: Icon, label, value, hint, tone, highlight }: { icon: any; label: string; value: string; hint: string; tone: string; highlight?: boolean }) {
+function Kpi({ icon: Icon, label, value, hint, tone, highlight, tooltip }: { icon: any; label: string; value: string; hint: string; tone: string; highlight?: boolean; tooltip?: string }) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-      className={"card-surface p-6 " + (highlight ? "ring-1 ring-secondary/40" : "")}>
+      className={"card-surface p-6 " + (highlight ? "ring-1 ring-secondary/40" : "")} title={tooltip}>
       <div className="flex justify-between items-start">
         <Icon className="h-5 w-5 text-secondary" />
         <span className={"chip " + tone + " text-[10px]"}>{hint.split(" ").slice(0,2).join(" ")}</span>
@@ -190,7 +190,7 @@ function PaymentBlock({ title, tone, ops, empty, showReceipt }: { title: string;
                 )}
               </div>
               <div className="text-right shrink-0 ml-3">
-                <div className="font-semibold text-sm">{formatCurrency(Number(o.protected_amount), o.currency)}</div>
+                <div className="font-semibold text-sm">{formatCurrency(getProtectedAmount(o), o.currency)}</div>
                 <div className="text-[10px] text-muted-foreground font-mono">fee {formatCurrency(Number(o.fee_amount), o.currency)}</div>
               </div>
             </Link>
