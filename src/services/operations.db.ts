@@ -82,7 +82,17 @@ export const operationsDb = {
   async createPending(
     input: Omit<DBOperationInsert, "operation_code" | "status"> & Record<string, unknown>,
   ): Promise<DBOperation> {
-    const safe = pickAllowed(input);
+    const safe = pickAllowed(input) as Record<string, unknown>;
+
+    // FX normalisation — always store USD-equivalent values for executive aggregation.
+    const currency = String(safe.currency ?? input.currency ?? "USD").toUpperCase();
+    const protectedAmount = Number(safe.protected_amount ?? input.protected_amount ?? 0);
+    const quote = await getUsdRate(currency);
+    safe.operation_currency = currency;
+    safe.usd_conversion_rate = quote.rate;
+    safe.usd_normalized_value = protectedAmount * quote.rate;
+    safe.fx_reference_date = quote.reference_date;
+
     const payload = {
       ...safe,
       operation_code: makeOperationCode(),
