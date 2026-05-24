@@ -316,15 +316,9 @@ function OperacaoDetail() {
             </motion.div>
           ) : null}
         </div>
-
-        {/* RIGHT — Timeline */}
-        <div className="card-surface p-6">
-          <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
-          </h3>
-          <OperationTimeline op={op} />
-        </div>
       </div>
+
+
 
     </AppShell>
   );
