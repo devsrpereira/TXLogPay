@@ -109,19 +109,19 @@ export function formatPercent(rate: number): string {
 }
 
 // ----- Multi-currency normalisation -----
-// Static FX reference rates (currency → USD). Refreshed at fx_reference_date.
-// In production these come from a treasury feed; here we use stable mid-market refs.
+// USD-base FX rates: 1 USD = rate units of the target currency.
+// Convert any value back to USD with: originalValue / rate[currency].
 export const USD_FX_RATES: Record<string, number> = {
   USD: 1,
-  EUR: 1.08,
-  GBP: 1.27,
-  BRL: 0.18,
-  CNY: 0.14,
+  EUR: 0.92,
+  GBP: 0.78,
+  BRL: 5.56,
+  CNY: 7.24,
 };
 export const FX_REFERENCE_DATE = "2026-05-24";
 
 export function toUSD(value: number, currency: string = "USD"): number {
   const rate = USD_FX_RATES[currency?.toUpperCase()] ?? 1;
-  return (Number(value) || 0) * rate;
+  return (Number(value) || 0) / (rate > 0 ? rate : 1);
 }
 
