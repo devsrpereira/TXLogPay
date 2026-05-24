@@ -160,6 +160,9 @@ function OperacaoDetail() {
       {/* ---------- FX reference (USD conversion) ---------- */}
       <FxReferenceCard op={op} />
 
+      {/* ---------- Liquidação Internacional ---------- */}
+      {settlement && <SettlementCard settlement={settlement} />}
+
       {/* ---------- Operational workspace: timeline (left) + upload (right) ---------- */}
       <div className={(showPaymentActions ? "grid lg:grid-cols-2" : "grid grid-cols-1") + " gap-5 mt-5 items-start"}>
         {/* LEFT — Timeline */}
@@ -167,7 +170,7 @@ function OperacaoDetail() {
           <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
             <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
           </h3>
-          <OperationTimeline op={op} />
+          <OperationTimeline op={op} settlement={settlement ?? null} />
         </div>
 
         {/* RIGHT — receipt + hackathon validation */}
