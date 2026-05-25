@@ -45,6 +45,7 @@ function OperacaoDetail() {
   const { data: settlement } = useSettlement(id);
   const submitReceipt = useSubmitReceipt();
   const validate = useValidatePayment();
+  const executeSettlement = useExecuteSettlement();
 
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -74,14 +75,19 @@ function OperacaoDetail() {
     try { window.localStorage.setItem(storageKey, String(next)); } catch { /* noop */ }
   }
 
-  // Gatilho automático: quando current_status === release_trigger, dispara liquidação.
+  // Gatilho automático: quando current_status === release_trigger e a operação
+  // está ativa (garantia validada), dispara a liquidação internacional.
   useEffect(() => {
     if (!currentSiscomex || !op) return;
     const trigger = (op.release_trigger || "").toUpperCase();
     if (!trigger) return;
-    if (currentSiscomex.key === trigger && !settlement && !validate.isPending && isActive(op.status)) {
-      validate.mutateAsync(id).catch(() => { /* swallow — UX invisível */ });
-    }
+    const matched = currentSiscomex.key === trigger;
+    if (!matched) return;
+    if (settlement || executeSettlement.isPending) return;
+    if (!isActive(op.status)) return;
+    executeSettlement
+      .mutateAsync({ operationId: id, currency: op.currency })
+      .catch(() => { /* swallow — UX invisível */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSiscomex?.key, op?.release_trigger, op?.status, settlement?.id]);
 
