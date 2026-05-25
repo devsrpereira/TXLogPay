@@ -58,6 +58,7 @@ function OperacaoDetail() {
   const submitReceipt = useSubmitReceipt();
   const validate = useValidatePayment();
   const executeSettlement = useExecuteSettlement();
+  const qc = useQueryClient();
 
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
