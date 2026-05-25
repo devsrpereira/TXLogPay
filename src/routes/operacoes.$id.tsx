@@ -5,8 +5,18 @@ import { motion } from "motion/react";
 import {
   CheckCircle2, Shield, Zap, FileText, Clock, Loader2,
   Upload, FileCheck2, X, ExternalLink, Sparkles, AlertTriangle,
-  PackageCheck, Banknote, Activity, Truck, Landmark, Globe, ArrowRight, Radio,
+  PackageCheck, Banknote, Activity, Truck, Landmark, Globe, ArrowRight, Radio, PlayCircle,
 } from "lucide-react";
+
+const SISCOMEX_SEQUENCE = [
+  { key: "CREATED",           label: "Operação criada" },
+  { key: "EXPORTER_ACCEPTED", label: "Exportador confirmou a operação" },
+  { key: "CARGO_SHIPPED",     label: "Carga embarcada pelo exportador" },
+  { key: "IN_TRANSIT",        label: "Transporte internacional em andamento" },
+  { key: "CUSTOMS_ARRIVAL",   label: "Carga recebida na alfândega" },
+  { key: "CUSTOMS_RELEASED",  label: "Desembaraço aduaneiro concluído" },
+] as const;
+type SiscomexKey = typeof SISCOMEX_SEQUENCE[number]["key"];
 import {
   useOperation, useSubmitReceipt, useValidatePayment, useSettlement,
 } from "@/hooks/use-operations";
@@ -43,6 +53,33 @@ function OperacaoDetail() {
       operationsDb.getReceiptUrl(op.payment_receipt_url).then(setSignedUrl);
     }
   }, [op?.payment_receipt_url]);
+
+  // ---------- Siscomex simulator (client-side, persisted per operation) ----------
+  const storageKey = `siscomex:${id}`;
+  const [siscomexIdx, setSiscomexIdx] = useState<number>(() => {
+    if (typeof window === "undefined") return -1;
+    const v = window.localStorage.getItem(`siscomex:${id}`);
+    return v ? Number(v) : -1;
+  });
+  const currentSiscomex = siscomexIdx >= 0 ? SISCOMEX_SEQUENCE[siscomexIdx] : null;
+
+  function advanceSiscomex() {
+    if (siscomexIdx >= SISCOMEX_SEQUENCE.length - 1) return;
+    const next = siscomexIdx + 1;
+    setSiscomexIdx(next);
+    try { window.localStorage.setItem(storageKey, String(next)); } catch { /* noop */ }
+  }
+
+  // Gatilho automático: quando current_status === release_trigger, dispara liquidação.
+  useEffect(() => {
+    if (!currentSiscomex || !op) return;
+    const trigger = (op.release_trigger || "").toUpperCase();
+    if (!trigger) return;
+    if (currentSiscomex.key === trigger && !settlement && !validate.isPending && isActive(op.status)) {
+      validate.mutateAsync(id).catch(() => { /* swallow — UX invisível */ });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSiscomex?.key, op?.release_trigger, op?.status, settlement?.id]);
 
   if (isLoading) {
     return <AppShell><div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 text-secondary animate-spin" /></div></AppShell>;
@@ -167,11 +204,27 @@ function OperacaoDetail() {
       <div className={(showPaymentActions ? "grid lg:grid-cols-2" : "grid grid-cols-1") + " gap-5 mt-5 items-start"}>
         {/* LEFT — Timeline */}
         <div className="card-surface p-6 order-2 lg:order-1">
-          <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
-          </h3>
-          <OperationTimeline op={op} settlement={settlement ?? null} />
+          <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+            <h3 className="text-base font-semibold flex items-center gap-2">
+              <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
+            </h3>
+            <button
+              onClick={advanceSiscomex}
+              disabled={siscomexIdx >= SISCOMEX_SEQUENCE.length - 1}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest border border-secondary/40 text-secondary hover:bg-secondary/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="Avança o próximo evento Siscomex (simulador)"
+            >
+              <PlayCircle className="h-3.5 w-3.5" />
+              Simular evento operacional
+            </button>
+          </div>
+          <OperationTimeline
+            op={op}
+            settlement={settlement ?? null}
+            siscomexStatus={currentSiscomex}
+          />
         </div>
+
 
         {/* RIGHT — receipt + hackathon validation */}
         {showPaymentActions && <div className="space-y-5 order-1 lg:order-2">
@@ -382,7 +435,11 @@ type TimelineStage = {
   at?: string | null;
 };
 
-function OperationTimeline({ op, settlement }: { op: { status: string; created_at: string; updated_at: string; activated_at: string | null; payment_submitted_at: string | null }; settlement: Settlement | null }) {
+function OperationTimeline({ op, settlement, siscomexStatus }: {
+  op: { status: string; created_at: string; updated_at: string; activated_at: string | null; payment_submitted_at: string | null };
+  settlement: Settlement | null;
+  siscomexStatus: { key: SiscomexKey; label: string } | null;
+}) {
   const status = op.status;
   const order = [
     "PENDING_PAYMENT", "PAYMENT_UNDER_REVIEW",
@@ -394,15 +451,19 @@ function OperationTimeline({ op, settlement }: { op: { status: string; created_a
   const settledAt = settlement?.created_at ?? null;
   const settledOk = !!settlement?.successful;
 
+  const monitoringDesc = siscomexStatus
+    ? `Status atual: ${siscomexStatus.label}`
+    : "Status atual: aguardando primeiro evento Siscomex";
+
   const stages: TimelineStage[] = [
     { key: "registered", title: "Operação registrada", desc: "Processo operacional criado e vinculado ao Siscomex.", icon: FileText, at: op.created_at },
     { key: "pending", title: "Garantia aguardando depósito", desc: "Aguardando pagamento via PIX, TED ou SWIFT.", icon: Banknote, at: reached(0) ? op.created_at : null },
     { key: "received", title: "Comprovante recebido", desc: "Comprovante enviado pelo importador.", icon: FileCheck2, at: op.payment_submitted_at },
     { key: "validated", title: "Garantia validada", desc: "Compliance confirmou os fundos em custódia.", icon: Shield, at: op.activated_at },
-    { key: "settlement_started", title: "Settlement iniciado", desc: "Liquidação internacional disparada pelo motor de pagamentos.", icon: Radio, at: settledAt ?? (op.activated_at ? op.activated_at : null) },
-    { key: "settlement_confirmed", title: "Liquidação confirmada", desc: "Rede internacional confirmou a liquidação dos fundos.", icon: Landmark, at: settledOk ? settledAt : null },
+    { key: "monitoring", title: "Monitoramento operacional", desc: monitoringDesc, icon: Truck, at: reached(2) ? op.activated_at : null },
+    { key: "settlement_started", title: "Liquidação internacional iniciada", desc: "Liquidação internacional disparada pelo motor de pagamentos.", icon: Radio, at: settledAt },
+    { key: "settlement_confirmed", title: "Liquidação internacional", desc: "Rede internacional confirmou a liquidação dos fundos.", icon: Landmark, at: settledOk ? settledAt : null },
     { key: "ledger_confirmed", title: "Ledger confirmado", desc: "Registro imutável da liquidação no ledger de referência.", icon: Activity, at: settlement?.ledger ? settledAt : null },
-    { key: "monitoring", title: "Monitoramento operacional", desc: "Operação em acompanhamento até o evento de liberação.", icon: Truck, at: reached(2) ? op.activated_at : null },
     { key: "settled", title: "Operação liquidada", desc: "Ciclo financeiro encerrado com sucesso.", icon: PackageCheck, at: status === "COMPLETED" ? op.updated_at : null },
   ];
 
