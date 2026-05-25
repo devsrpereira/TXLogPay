@@ -5,8 +5,12 @@ import { motion } from "motion/react";
 import {
   CheckCircle2, Shield, Zap, FileText, Clock, Loader2,
   Upload, FileCheck2, X, ExternalLink, Sparkles, AlertTriangle,
-  PackageCheck, Banknote, Activity, Truck, Landmark, Globe, ArrowRight, Radio, PlayCircle,
+  PackageCheck, Banknote, Truck, Landmark, Globe, ArrowRight, Radio, PlayCircle,
+  Receipt, Building2, ShieldCheck,
 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 const SISCOMEX_SEQUENCE = [
   { key: "CREATED",           label: "Operação criada" },
@@ -18,7 +22,7 @@ const SISCOMEX_SEQUENCE = [
 ] as const;
 type SiscomexKey = typeof SISCOMEX_SEQUENCE[number]["key"];
 import {
-  useOperation, useSubmitReceipt, useValidatePayment, useSettlement,
+  useOperation, useSubmitReceipt, useValidatePayment, useSettlement, useExecuteSettlement,
 } from "@/hooks/use-operations";
 import type { Settlement } from "@/services/settlements.db";
 import { operationsDb, type DBOperation } from "@/services/operations.db";
