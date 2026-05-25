@@ -54,6 +54,33 @@ function OperacaoDetail() {
     }
   }, [op?.payment_receipt_url]);
 
+  // ---------- Siscomex simulator (client-side, persisted per operation) ----------
+  const storageKey = `siscomex:${id}`;
+  const [siscomexIdx, setSiscomexIdx] = useState<number>(() => {
+    if (typeof window === "undefined") return -1;
+    const v = window.localStorage.getItem(`siscomex:${id}`);
+    return v ? Number(v) : -1;
+  });
+  const currentSiscomex = siscomexIdx >= 0 ? SISCOMEX_SEQUENCE[siscomexIdx] : null;
+
+  function advanceSiscomex() {
+    if (siscomexIdx >= SISCOMEX_SEQUENCE.length - 1) return;
+    const next = siscomexIdx + 1;
+    setSiscomexIdx(next);
+    try { window.localStorage.setItem(storageKey, String(next)); } catch { /* noop */ }
+  }
+
+  // Gatilho automático: quando current_status === release_trigger, dispara liquidação.
+  useEffect(() => {
+    if (!currentSiscomex || !op) return;
+    const trigger = (op.release_trigger || "").toUpperCase();
+    if (!trigger) return;
+    if (currentSiscomex.key === trigger && !settlement && !validate.isPending && isActive(op.status)) {
+      validate.mutateAsync(id).catch(() => { /* swallow — UX invisível */ });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSiscomex?.key, op?.release_trigger, op?.status, settlement?.id]);
+
   if (isLoading) {
     return <AppShell><div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 text-secondary animate-spin" /></div></AppShell>;
   }
