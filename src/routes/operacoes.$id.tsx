@@ -5,8 +5,18 @@ import { motion } from "motion/react";
 import {
   CheckCircle2, Shield, Zap, FileText, Clock, Loader2,
   Upload, FileCheck2, X, ExternalLink, Sparkles, AlertTriangle,
-  PackageCheck, Banknote, Activity, Truck, Landmark, Globe, ArrowRight, Radio,
+  PackageCheck, Banknote, Activity, Truck, Landmark, Globe, ArrowRight, Radio, PlayCircle,
 } from "lucide-react";
+
+const SISCOMEX_SEQUENCE = [
+  { key: "CREATED",           label: "Operação criada" },
+  { key: "EXPORTER_ACCEPTED", label: "Exportador confirmou a operação" },
+  { key: "CARGO_SHIPPED",     label: "Carga embarcada pelo exportador" },
+  { key: "IN_TRANSIT",        label: "Transporte internacional em andamento" },
+  { key: "CUSTOMS_ARRIVAL",   label: "Carga recebida na alfândega" },
+  { key: "CUSTOMS_RELEASED",  label: "Desembaraço aduaneiro concluído" },
+] as const;
+type SiscomexKey = typeof SISCOMEX_SEQUENCE[number]["key"];
 import {
   useOperation, useSubmitReceipt, useValidatePayment, useSettlement,
 } from "@/hooks/use-operations";
