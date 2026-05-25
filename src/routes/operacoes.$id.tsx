@@ -1,16 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { motion } from "motion/react";
 import {
   CheckCircle2, Shield, Zap, FileText, Clock, Loader2,
   Upload, FileCheck2, X, ExternalLink, Sparkles, AlertTriangle,
   PackageCheck, Banknote, Truck, Landmark, Globe, ArrowRight, Radio, PlayCircle,
-  Receipt, Building2, ShieldCheck,
+  Receipt, Building2, ShieldCheck, Wallet,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { createOperationWallet } from "@/lib/wallet.functions";
+import { toast } from "sonner";
+
 
 // ---------------------------------------------------------------------------
 // SISCOMEX — Enum operacional (persistido) × Label visual (UI).
@@ -74,6 +78,27 @@ function OperacaoDetail() {
     return v ? Number(v) : -1;
   });
   const currentSiscomex = siscomexIdx >= 0 ? SISCOMEX_SEQUENCE[siscomexIdx] : null;
+
+  // ---------- DEBUG: teste isolado da engine Stellar Testnet ----------
+  const createWalletFn = useServerFn(createOperationWallet);
+  const [walletDebugLoading, setWalletDebugLoading] = useState(false);
+  async function handleTestStellarWallet() {
+    if (!id) return;
+    setWalletDebugLoading(true);
+    try {
+      const { publicKey } = await createWalletFn({ data: { operationId: id } });
+      toast.success("Wallet operacional criada com sucesso", {
+        description: `Public Key: ${publicKey}`,
+        duration: 12000,
+      });
+    } catch (e) {
+      toast.error("Falha ao criar wallet Stellar", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setWalletDebugLoading(false);
+    }
+  }
 
   function advanceSiscomex() {
     if (siscomexIdx >= SISCOMEX_SEQUENCE.length - 1) return;
@@ -228,15 +253,30 @@ function OperacaoDetail() {
             <h3 className="text-base font-semibold flex items-center gap-2">
               <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
             </h3>
-            <button
-              onClick={advanceSiscomex}
-              disabled={siscomexIdx >= SISCOMEX_SEQUENCE.length - 1}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest border border-secondary/40 text-secondary hover:bg-secondary/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Avança o próximo evento Siscomex (simulador)"
-            >
-              <PlayCircle className="h-3.5 w-3.5" />
-              Simular evento operacional
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleTestStellarWallet}
+                disabled={walletDebugLoading}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest border border-muted-foreground/30 text-muted-foreground hover:bg-muted/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="DEBUG — gera wallet Stellar testnet e persiste em operations.operation_wallet"
+              >
+                {walletDebugLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Wallet className="h-3.5 w-3.5" />
+                )}
+                Testar wallet Stellar
+              </button>
+              <button
+                onClick={advanceSiscomex}
+                disabled={siscomexIdx >= SISCOMEX_SEQUENCE.length - 1}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest border border-secondary/40 text-secondary hover:bg-secondary/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Avança o próximo evento Siscomex (simulador)"
+              >
+                <PlayCircle className="h-3.5 w-3.5" />
+                Simular evento operacional
+              </button>
+            </div>
           </div>
           <OperationTimeline
             op={op}

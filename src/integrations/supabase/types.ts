@@ -37,6 +37,7 @@ export type Database = {
           operation_code: string
           operation_currency: string | null
           operation_value: number
+          operation_wallet: string | null
           payment_proof_url: string | null
           payment_receipt_name: string | null
           payment_receipt_url: string | null
@@ -75,6 +76,7 @@ export type Database = {
           operation_code: string
           operation_currency?: string | null
           operation_value?: number
+          operation_wallet?: string | null
           payment_proof_url?: string | null
           payment_receipt_name?: string | null
           payment_receipt_url?: string | null
@@ -113,6 +115,7 @@ export type Database = {
           operation_code?: string
           operation_currency?: string | null
           operation_value?: number
+          operation_wallet?: string | null
           payment_proof_url?: string | null
           payment_receipt_name?: string | null
           payment_receipt_url?: string | null
