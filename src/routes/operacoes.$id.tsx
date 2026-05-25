@@ -208,7 +208,7 @@ function OperacaoDetail() {
       <FxReferenceCard op={op} />
 
       {/* ---------- Liquidação Internacional ---------- */}
-      {settlement && <SettlementCard settlement={settlement} />}
+      {settlement && <SettlementCard settlement={settlement} op={op} />}
 
       {/* ---------- Operational workspace: timeline (left) + upload (right) ---------- */}
       <div className={(showPaymentActions ? "grid lg:grid-cols-2" : "grid grid-cols-1") + " gap-5 mt-5 items-start"}>
