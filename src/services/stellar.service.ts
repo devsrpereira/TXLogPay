@@ -68,7 +68,7 @@ export async function executeStellarSettlement(
 
   console.log("ASSET DEBUG");
   console.log(asset);
-  console.log(asset instanceof StellarSdk.Asset);
+  console.log(asset instanceof StellarSdk.Asset); 
 
   console.log(asset);
   console.log(asset instanceof Asset);
