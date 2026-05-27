@@ -8,7 +8,7 @@ import {
   CheckCircle2, Shield, Zap, FileText, Clock, Loader2,
   Upload, FileCheck2, X, ExternalLink, Sparkles, AlertTriangle,
   PackageCheck, Banknote, Truck, Landmark, Globe, ArrowRight, Radio, PlayCircle,
-  Receipt, Building2, ShieldCheck, Wallet,
+  Receipt, Building2, ShieldCheck,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -82,34 +82,8 @@ function OperacaoDetail() {
   const currentSiscomex = siscomexIdx >= 0 ? SISCOMEX_SEQUENCE[siscomexIdx] : null;
   const [advancing, setAdvancing] = useState(false);
 
-  // ---------- DEBUG: teste isolado da engine Stellar Testnet ----------
   const createWalletFn = useServerFn(createOperationWallet);
-  const [walletDebugLoading, setWalletDebugLoading] = useState(false);
-  async function handleTestStellarWallet() {
-    console.log("TEST BUTTON CLICKED", { id });
-    if (!id) {
-      toast.error("operationId ausente");
-      return;
-    }
-    toast.info("Gerando wallet Stellar real…");
-    setWalletDebugLoading(true);
-    try {
-      const res = await createWalletFn({ data: { operationId: id } });
-      console.log({ walletCreated: res?.publicKey });
-      toast.success("Wallet gerada", {
-        description: res?.publicKey,
-        duration: 12000,
-      });
-      qc.invalidateQueries({ queryKey: ["operations", "detail", id] });
-    } catch (e) {
-      console.error("WALLET CREATE ERROR", e);
-      toast.error("Falha na geração da wallet", {
-        description: e instanceof Error ? e.message : String(e),
-      });
-    } finally {
-      setWalletDebugLoading(false);
-    }
-  }
+
 
   async function advanceSiscomex() {
     if (!id || advancing) return;
@@ -289,7 +263,7 @@ function OperacaoDetail() {
         <Info label="Incoterm" value={op.incoterm || "—"} />
       </div>
       <p className="mt-3 text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
-        100% do valor protegido via escrow operacional
+        Garantia integral protegida pela TXLOGPAY
       </p>
 
       <div className="grid lg:grid-cols-2 gap-5 mt-5">
@@ -330,19 +304,6 @@ function OperacaoDetail() {
               <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
             </h3>
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleTestStellarWallet}
-                disabled={walletDebugLoading}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest border border-muted-foreground/30 text-muted-foreground hover:bg-muted/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title="DEBUG — gera wallet Stellar testnet e persiste em operations.operation_wallet"
-              >
-                {walletDebugLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Wallet className="h-3.5 w-3.5" />
-                )}
-                Testar wallet Stellar
-              </button>
               <button
                 onClick={advanceSiscomex}
                 disabled={advancing || siscomexIdx >= SISCOMEX_SEQUENCE.length - 1}
@@ -387,9 +348,13 @@ function OperacaoDetail() {
                 <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex items-center gap-3">
                   <FileCheck2 className="h-5 w-5 text-success shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{op.payment_receipt_name || "Comprovante enviado"}</div>
+                    <div className="text-sm font-semibold">
+                      {op.payment_submitted_at
+                        ? `Comprovante recebido em ${new Date(op.payment_submitted_at).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}`
+                        : "Comprovante recebido"}
+                    </div>
                     <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                      {op.payment_submitted_at ? new Date(op.payment_submitted_at).toLocaleString("pt-BR") : "—"}
+                      Em análise pela equipe TXLOGPAY
                     </div>
                   </div>
                   {signedUrl && (
@@ -557,7 +522,7 @@ function FxReferenceCard({ op }: { op: DBOperation }) {
         </div>
       )}
       <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground ml-auto">
-        Cotação em {new Date(refDate).toLocaleString("pt-BR")}
+        Cotação em {new Intl.DateTimeFormat(undefined, { dateStyle: "short", timeStyle: "short", timeZoneName: "short" }).format(new Date(refDate))}
       </div>
     </motion.div>
   );
