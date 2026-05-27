@@ -42,6 +42,16 @@ export const executeSettlement = createServerFn({ method: "POST" })
 
     const currency = operation.currency ?? "USD";
     const operationValue = Number(operation.operation_value ?? 0);
+
+    // Import dinâmico — server-only.
+    const {
+      createFundedWallet,
+      establishTrustline,
+      getAsset,
+      sendAsset,
+      toStellarAmount,
+    } = await import("@/services/stellar-assets.server");
+
     const amount = toStellarAmount(operationValue || 1);
 
     // Idempotência — se já existe settlement confirmado, retorna.
