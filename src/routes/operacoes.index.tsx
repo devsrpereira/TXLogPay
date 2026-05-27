@@ -13,7 +13,7 @@ export const Route = createFileRoute("/operacoes/")({
   component: OperacoesList,
 });
 
-import { STATUS_META, isActive } from "@/domain/operation-status";
+import { STATUS_META } from "@/domain/operation-status";
 
 const isSettled = (o: DBOperation) =>
   o.settlement_status === "CONFIRMED" ||
