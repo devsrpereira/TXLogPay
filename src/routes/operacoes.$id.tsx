@@ -348,9 +348,13 @@ function OperacaoDetail() {
                 <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex items-center gap-3">
                   <FileCheck2 className="h-5 w-5 text-success shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{op.payment_receipt_name || "Comprovante enviado"}</div>
+                    <div className="text-sm font-semibold">
+                      {op.payment_submitted_at
+                        ? `Comprovante recebido em ${new Date(op.payment_submitted_at).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}`
+                        : "Comprovante recebido"}
+                    </div>
                     <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                      {op.payment_submitted_at ? new Date(op.payment_submitted_at).toLocaleString("pt-BR") : "—"}
+                      Em análise pela equipe TXLOGPAY
                     </div>
                   </div>
                   {signedUrl && (
