@@ -60,7 +60,16 @@ export async function executeStellarSettlement(
   const amount = opts.amount ?? "10";
   const currency = opts.currency ?? "USD";
 
+  console.log("CURRENCY DEBUG");
+  console.log(currency);
+  console.log(typeof currency);
+
   const asset = getOperationalAsset(currency);
+
+  console.log("ASSET DEBUG");
+  console.log(asset);
+  console.log(asset instanceof StellarSdk.Asset);
+
   console.log(asset);
   console.log(asset instanceof Asset);
 
