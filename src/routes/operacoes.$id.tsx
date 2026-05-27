@@ -263,7 +263,7 @@ function OperacaoDetail() {
         <Info label="Incoterm" value={op.incoterm || "—"} />
       </div>
       <p className="mt-3 text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
-        100% do valor protegido via escrow operacional
+        Garantia integral protegida pela TXLOGPAY
       </p>
 
       <div className="grid lg:grid-cols-2 gap-5 mt-5">
