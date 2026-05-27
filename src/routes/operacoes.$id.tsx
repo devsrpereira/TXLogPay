@@ -82,34 +82,8 @@ function OperacaoDetail() {
   const currentSiscomex = siscomexIdx >= 0 ? SISCOMEX_SEQUENCE[siscomexIdx] : null;
   const [advancing, setAdvancing] = useState(false);
 
-  // ---------- DEBUG: teste isolado da engine Stellar Testnet ----------
   const createWalletFn = useServerFn(createOperationWallet);
-  const [walletDebugLoading, setWalletDebugLoading] = useState(false);
-  async function handleTestStellarWallet() {
-    console.log("TEST BUTTON CLICKED", { id });
-    if (!id) {
-      toast.error("operationId ausente");
-      return;
-    }
-    toast.info("Gerando wallet Stellar real…");
-    setWalletDebugLoading(true);
-    try {
-      const res = await createWalletFn({ data: { operationId: id } });
-      console.log({ walletCreated: res?.publicKey });
-      toast.success("Wallet gerada", {
-        description: res?.publicKey,
-        duration: 12000,
-      });
-      qc.invalidateQueries({ queryKey: ["operations", "detail", id] });
-    } catch (e) {
-      console.error("WALLET CREATE ERROR", e);
-      toast.error("Falha na geração da wallet", {
-        description: e instanceof Error ? e.message : String(e),
-      });
-    } finally {
-      setWalletDebugLoading(false);
-    }
-  }
+
 
   async function advanceSiscomex() {
     if (!id || advancing) return;
