@@ -57,11 +57,19 @@ export async function executeStellarSettlement(
     currency?: string;
   } = {},
 ) {
+  console.log("ONLINE ISSUER DEBUG");
+  console.log(import.meta.env.VITE_STELLAR_ISSUER_PUBLIC);
+  console.log(typeof import.meta.env.VITE_STELLAR_ISSUER_PUBLIC);
+
+
   const amount = opts.amount ?? "10";
   const currency = opts.currency ?? "USD";
 
   const asset = getOperationalAsset(currency);
+  console.log("ONLINE ASSET DEBUG");
   console.log(asset);
+  console.log(asset.code);
+  console.log(asset.issuer);
   console.log(asset instanceof Asset); 
 
   // Wallet operacional (escrow)
