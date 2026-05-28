@@ -8,7 +8,7 @@ import {
   CheckCircle2, Shield, Zap, FileText, Clock, Loader2,
   Upload, FileCheck2, X, ExternalLink, Sparkles, AlertTriangle,
   PackageCheck, Banknote, Truck, Landmark, Globe, ArrowRight, Radio, PlayCircle,
-  Receipt, Building2, ShieldCheck, Wallet,
+  Receipt, Building2, ShieldCheck,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -44,13 +44,6 @@ import { getProtectedAmount } from "@/lib/financial-calculations";
 import {
   STATUS_META, isActive, isPending, isUnderReview,
 } from "@/domain/operation-status";
-
-import {
-  isMonitoringCompleted,
-  hasSettlementStarted,
-  isSettlementCompleted,
-} from "@/lib/operation-status";
-
 
 export const Route = createFileRoute("/operacoes/$id")({
   head: ({ params }) => ({ meta: [{ title: `Operação ${params.id} — TXLOGPAY` }] }),
@@ -89,34 +82,8 @@ function OperacaoDetail() {
   const currentSiscomex = siscomexIdx >= 0 ? SISCOMEX_SEQUENCE[siscomexIdx] : null;
   const [advancing, setAdvancing] = useState(false);
 
-  // ---------- DEBUG: teste isolado da engine Stellar Testnet ----------
   const createWalletFn = useServerFn(createOperationWallet);
-  const [walletDebugLoading, setWalletDebugLoading] = useState(false);
-  async function handleTestStellarWallet() {
-    console.log("TEST BUTTON CLICKED", { id });
-    if (!id) {
-      toast.error("operationId ausente");
-      return;
-    }
-    toast.info("Gerando wallet Stellar real…");
-    setWalletDebugLoading(true);
-    try {
-      const res = await createWalletFn({ data: { operationId: id } });
-      console.log({ walletCreated: res?.publicKey });
-      toast.success("Wallet gerada", {
-        description: res?.publicKey,
-        duration: 12000,
-      });
-      qc.invalidateQueries({ queryKey: ["operations", "detail", id] });
-    } catch (e) {
-      console.error("WALLET CREATE ERROR", e);
-      toast.error("Falha na geração da wallet", {
-        description: e instanceof Error ? e.message : String(e),
-      });
-    } finally {
-      setWalletDebugLoading(false);
-    }
-  }
+
 
   async function advanceSiscomex() {
     if (!id || advancing) return;
@@ -146,10 +113,7 @@ function OperacaoDetail() {
     const matched =
       !!current_operational_status &&
       !!release_trigger &&
-      isMonitoringCompleted(
-          op?.current_operational_status,
-          op?.release_trigger,
-      );
+      current_operational_status === release_trigger;
     // eslint-disable-next-line no-console
     // console.log({ release_trigger, current_operational_status, matched });
 
@@ -187,9 +151,19 @@ function OperacaoDetail() {
         await operationsDb.update(id, { status: "SETTLEMENT_IN_PROGRESS" as never });
         qc.invalidateQueries({ queryKey: ["operations", "detail", id] });
 
-        // 2. Executa settlement on-chain (wallet operacional já foi criada na validação da garantia)
-        console.log("CALLING executeSettlement");
+        // 2. Garante wallet operacional (fallback caso a validação anterior tenha falhado).
+        if (!op.operation_wallet) {
+          try {
+            const res = await createWalletFn({ data: { operationId: id } });
+            console.log("operation_wallet (fallback) criada:", res?.publicKey);
+            qc.invalidateQueries({ queryKey: ["operations", "detail", id] });
+          } catch (we) {
+            console.warn("Fallback operation_wallet falhou (continuando):", we);
+          }
+        }
 
+        // 3. Executa settlement on-chain
+        console.log("CALLING executeSettlement");
         await executeSettlement.mutateAsync({ operationId: id, currency: op.currency });
       } catch (e) {
         console.error("SETTLEMENT FLOW ERROR", e);
@@ -283,11 +257,14 @@ function OperacaoDetail() {
       </motion.div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <Info label="Garantia protegida" value={formatCurrency(getProtectedAmount(op), op.currency)} />
-        <Info label="Taxa TXLOGPAY" value={formatCurrency(Number(op.fee_amount), op.currency)} />
-        <Info label="Total pago" value={formatCurrency(Number(op.total_amount), op.currency)} highlight />
+        <Info label="Valor da operação" value={formatCurrency(getProtectedAmount(op), op.currency, { decimals: 2 })} />
+        <Info label="Taxa TXLOGPAY" value={formatCurrency(Number(op.fee_amount), op.currency, { decimals: 2 })} />
+        <Info label="Total pago pelo importador" value={formatCurrency(Number(op.total_amount), op.currency, { decimals: 2 })} highlight />
         <Info label="Incoterm" value={op.incoterm || "—"} />
       </div>
+      <p className="mt-3 text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+        Garantia integral protegida pela TXLOGPAY
+      </p>
 
       <div className="grid lg:grid-cols-2 gap-5 mt-5">
         <div className="card-surface p-6">
@@ -327,19 +304,6 @@ function OperacaoDetail() {
               <Zap className="h-4 w-4 text-secondary" /> Timeline operacional
             </h3>
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleTestStellarWallet}
-                disabled={walletDebugLoading}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest border border-muted-foreground/30 text-muted-foreground hover:bg-muted/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title="DEBUG — gera wallet Stellar testnet e persiste em operations.operation_wallet"
-              >
-                {walletDebugLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Wallet className="h-3.5 w-3.5" />
-                )}
-                Testar wallet Stellar
-              </button>
               <button
                 onClick={advanceSiscomex}
                 disabled={advancing || siscomexIdx >= SISCOMEX_SEQUENCE.length - 1}
@@ -384,9 +348,13 @@ function OperacaoDetail() {
                 <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex items-center gap-3">
                   <FileCheck2 className="h-5 w-5 text-success shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{op.payment_receipt_name || "Comprovante enviado"}</div>
+                    <div className="text-sm font-semibold">
+                      {op.payment_submitted_at
+                        ? `Comprovante recebido em ${new Date(op.payment_submitted_at).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}`
+                        : "Comprovante recebido"}
+                    </div>
                     <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                      {op.payment_submitted_at ? new Date(op.payment_submitted_at).toLocaleString("pt-BR") : "—"}
+                      Em análise pela equipe TXLOGPAY
                     </div>
                   </div>
                   {signedUrl && (
@@ -539,13 +507,13 @@ function FxReferenceCard({ op }: { op: DBOperation }) {
       </div>
       <div className="flex items-center gap-3 text-sm font-mono">
         <span className="text-foreground">
-          {formatCurrency(Number(op.protected_amount), original)}
+          {formatCurrency(Number(op.protected_amount), original, { decimals: 2 })}
         </span>
         <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-secondary font-bold">
           {usdValue != null
-            ? formatCurrency(usdValue, "USD")
-            : formatCurrency(Number(op.protected_amount), "USD")}
+            ? formatCurrency(usdValue, "USD", { decimals: 2 })
+            : formatCurrency(Number(op.protected_amount), "USD", { decimals: 2 })}
         </span>
       </div>
       {rate != null && (
@@ -554,7 +522,7 @@ function FxReferenceCard({ op }: { op: DBOperation }) {
         </div>
       )}
       <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground ml-auto">
-        Cotação em {new Date(refDate).toLocaleString("pt-BR")}
+        Cotação em {new Intl.DateTimeFormat(undefined, { dateStyle: "short", timeStyle: "short" }).format(new Date(refDate))}
       </div>
     </motion.div>
   );
@@ -571,56 +539,40 @@ type TimelineStage = {
 };
 
 function OperationTimeline({ op, settlement, siscomexStatus }: {
-  op: { status: string; created_at: string; updated_at: string; activated_at: string | null; payment_submitted_at: string | null };
+  op: {
+    status: string;
+    created_at: string;
+    updated_at: string;
+    activated_at: string | null;
+    payment_submitted_at: string | null;
+    payment_receipt_url?: string | null;
+    current_operational_status?: string | null;
+    release_trigger?: string | null;
+  };
   settlement: Settlement | null;
   siscomexStatus: { key: SiscomexKey; label: string } | null;
 }) {
-  const status = op.status;
-  const order = [
-    "PENDING_PAYMENT", "PAYMENT_UNDER_REVIEW",
-    "OPERATION_MONITORING", "ACTIVE",
-    "PAYMENT_RELEASED", "COMPLETED",
-  ];
-  const idx = order.indexOf(status);
-  const reached = (minIdx: number) => idx >= minIdx;
   const settledAt = settlement?.created_at ?? null;
   const settledOk = !!settlement?.successful;
-  
-  const settlementConfirmed =
-    settlement?.status === "CONFIRMED" || settledOk;
 
   const monitoringDesc = siscomexStatus
     ? `Status atual: ${siscomexStatus.label}`
     : "Status atual: aguardando primeiro evento Siscomex";
 
+  // Garantia aguardando depósito: concluído assim que existe comprovante.
+  const pendingDone = !!(op.payment_receipt_url || op.payment_submitted_at);
+  // Monitoramento operacional: concluído quando o status operacional casa o gatilho.
+  const monitoringDone =
+    !!op.current_operational_status &&
+    !!op.release_trigger &&
+    op.current_operational_status === op.release_trigger;
+
   const stages: TimelineStage[] = [
     { key: "registered", title: "Operação registrada", desc: "Processo operacional criado e vinculado ao Siscomex.", icon: FileText, at: op.created_at },
-    
-    { 
-      key: "pending",
-      title: "Garantia aguardando depósito",
-      desc: "Aguardando pagamento via PIX, TED ou SWIFT.",
-      icon: Banknote,
-      at:
-        op.payment_submitted_at ||
-        op.activated_at ||
-        (settlementConfirmed ? settledAt : null),
-    },
-
+    { key: "pending", title: "Garantia aguardando depósito", desc: "Aguardando pagamento via PIX, TED ou SWIFT.", icon: Banknote, at: pendingDone ? (op.payment_submitted_at ?? op.created_at) : null },
     { key: "received", title: "Comprovante recebido", desc: "Comprovante enviado pelo importador.", icon: FileCheck2, at: op.payment_submitted_at },
     { key: "validated", title: "Garantia validada", desc: "Compliance confirmou os fundos em custódia.", icon: Shield, at: op.activated_at },
-    
-    { 
-      key: "monitoring",
-      title: "Monitoramento operacional",
-      desc: monitoringDesc,
-      icon: Truck,
-      at:
-        settlementConfirmed
-          ? settledAt
-          : op.activated_at,
-    },
-
+    { key: "monitoring", title: "Monitoramento operacional", desc: monitoringDesc, icon: Truck, at: monitoringDone ? (op.activated_at ?? op.updated_at) : null },
     { key: "settlement_started", title: "Liquidação internacional iniciada", desc: "Liquidação internacional disparada pelo motor de pagamentos.", icon: Radio, at: settledAt },
     { key: "settlement_confirmed", title: "Liquidação internacional confirmada", desc: "Rede internacional confirmou a liquidação dos fundos.", icon: Landmark, at: settledOk ? settledAt : null },
     { key: "settled", title: "Operação liquidada", desc: "Ciclo financeiro encerrado com sucesso.", icon: PackageCheck, at: settledOk ? settledAt : null },
@@ -629,6 +581,7 @@ function OperationTimeline({ op, settlement, siscomexStatus }: {
   // Determine which stage is "active" (the current one in progress).
   const lastDoneIdx = stages.reduce((acc, s, i) => (s.at ? i : acc), -1);
   const activeIdx = Math.min(lastDoneIdx + 1, stages.length - 1);
+  const status = op.status;
 
   return (
     <ol className="relative border-l border-border ml-3 space-y-5">
@@ -677,7 +630,7 @@ function OperationTimeline({ op, settlement, siscomexStatus }: {
 
 function SettlementCard({ settlement, op }: { settlement: Settlement; op: DBOperation }) {
   const [open, setOpen] = useState(false);
-  const explorer = `https://stellar.expert/explorer/testnet/tx/${settlement.stellar_tx_hash}`;
+  const explorer = `https://stellar.expert/explorer/testnet/tx/${settlement.tx_hash}`;
   const ok = settlement.successful;
   const fiatCurrency = (settlement.operation_currency || op.currency || "USD").toUpperCase();
   const fiatAmount = Number(op.protected_amount ?? op.operation_value ?? 0);
